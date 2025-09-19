@@ -1,0 +1,8 @@
+[tool.ruff]
+line-length = 100
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "PL", "D", "UP", "C90", "B", "Q", "S"]
+ignore = []
