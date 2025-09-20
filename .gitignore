@@ -1,4 +1,5 @@
 # Custom settings
+temp_images/
 .vscode/
 *.png
 

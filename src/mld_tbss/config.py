@@ -1,3 +1,21 @@
 """Path and configs for MLD TBSS project."""
 
 from pathlib import Path
+
+ORIGINAL_DATA_ROOT_DIR = Path(__file__).parents[4] / "mld_data"
+TEMPORARY_DATA_DIR = Path(__file__).parents[2] / "temp_images"
+
+ORIGINAL_DIFFUSION_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "NODDI"
+ORIGINAL_DATA_PATIENTS_XLS = ORIGINAL_DATA_ROOT_DIR / "Multispectral_patients.xlsx"
+PATIENT_ID_MAPPING = ORIGINAL_DATA_ROOT_DIR / "initial_lookup.xlsx"
+
+FA_COPY_DIR = TEMPORARY_DATA_DIR / "FA_IMAGES"
+MO_COPY_DIR = TEMPORARY_DATA_DIR / "MO_IMAGES"
+MD_COPY_DIR = TEMPORARY_DATA_DIR / "MD_IMAGES"
+S0_COPY_DIR = TEMPORARY_DATA_DIR / "S0_IMAGES"
+COPY_FOLDER_DICT = {
+    "FA": FA_COPY_DIR,
+    "MD": MD_COPY_DIR,
+    "MO": MO_COPY_DIR,
+    "S0": S0_COPY_DIR,
+}
