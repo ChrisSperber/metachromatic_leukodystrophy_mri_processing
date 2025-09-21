@@ -1,11 +1,25 @@
 """Utility functions and constants for MLD TBSS project."""
 
+from dataclasses import dataclass
+
 import pandas as pd
 
-SUBJECT_ID = "Subject_ID"
-DATE_TAG = "Date_Tag"
-IMAGE_MODALITY = "Image_Modality"
-DTI_METHOD = "DTI_Method"
+
+@dataclass(frozen=True)
+class Cols:
+    """Data column names."""
+
+    FILENAME: str = "Filename"
+    AGE: str = "Age"
+    SEX: str = "Sex"
+    GMFC: str = "GMFC"
+    PATHOLOGY_TYPE: str = "Pathology_Type"
+    THERAPY: str = "Therapy"
+    MRI_SCORE: str = "MRI_Score"
+    SUBJECT_ID: str = "Subject_ID"
+    DATE_TAG: str = "Date_Tag"
+    IMAGE_MODALITY: str = "Image_Modality"
+    DTI_METHOD: str = "DTI_Method"
 
 
 def get_unique_row(df: pd.DataFrame, column: str, substring: str) -> pd.Series:
