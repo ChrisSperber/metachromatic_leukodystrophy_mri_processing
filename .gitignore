@@ -2,6 +2,7 @@
 temp_images/
 .vscode/
 *.png
+origdata/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

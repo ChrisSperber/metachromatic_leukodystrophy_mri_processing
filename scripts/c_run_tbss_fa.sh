@@ -74,10 +74,17 @@ HOST="$(hostname 2>/dev/null || echo 'NA')"
   echo "HOSTNAME=$HOST"
 } >> "$PARAMS"
 
+# Stage inputs with plain basenames so tbss_1_preproc is happy
+STAGING="$TBSS_DIR/incoming"
+mkdir -p "$STAGING"
+for f in "${FA_FILES[@]}"; do
+  ln -s "$f" "$STAGING/$(basename "$f")"
+done
+
 # ── TBSS FA pipeline ──────────────────────────────────────────────────────────
 # Preprocess: copies/normalizes inputs into FA/origdata keeping the filenames.
 log "tbss_1_preproc ..."
-tbss_1_preproc "${FA_FILES[@]}"
+( cd "$STAGING" && tbss_1_preproc ./*.nii* )
 
 # Registration: built-in FMRIB58 (-T) or custom (-t <template>)
 if [ "$TBSS_REG_FLAG" = "-T" ]; then
