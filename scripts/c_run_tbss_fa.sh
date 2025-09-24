@@ -86,6 +86,10 @@ done
 log "tbss_1_preproc ..."
 ( cd "$STAGING" && tbss_1_preproc ./*.nii* )
 
+# bring FA/ back to the run dir so steps 2–4 can see it here
+mv "$STAGING/FA" "$TBSS_DIR/"
+rm -rf "$STAGING"
+
 # Registration: built-in FMRIB58 (-T) or custom (-t <template>)
 if [ "$TBSS_REG_FLAG" = "-T" ]; then
   log "tbss_2_reg -T ..."
@@ -111,7 +115,8 @@ if [ -n "${SKELETON_THR_TESTS:-}" ]; then
   # split the string into an array
   read -r -a TEST_THRS <<< "$SKELETON_THR_TESTS"
 
-  [ -f mean_FA_skeleton.nii.gz ] || die "mean_FA_skeleton.nii.gz missing (run step 3 first)."
+  SKELETON_SRC="stats/mean_FA_skeleton.nii.gz"
+  [ -f "$SKELETON_SRC" ] || die "Expected skeleton at $SKELETON_SRC (run step 3/4 first)."
 
   for THR in "${TEST_THRS[@]}"; do
     # basic validation: 0 < thr < 1
@@ -120,7 +125,7 @@ if [ -n "${SKELETON_THR_TESTS:-}" ]; then
     out="$EXTRA_DIR/mean_FA_skeleton_mask_thresh_${tag}.nii.gz"
 
     # New mask: skeleton voxels with FA >= THR
-    fslmaths mean_FA_skeleton -thr "$THR" -bin "$out" \
+    fslmaths "$SKELETON_SRC" -thr "$THR" -bin "$out" \
       || die "Failed to make extra mask for THR=$THR"
 
     log "Extra mask: $out"
@@ -129,7 +134,6 @@ fi
 
 # ── Minimal integrity checks (files Step B depends on) ────────────────────────
 REQUIRED=(
-  "FA/origdata" # canonical subject file basenames
   "stats/mean_FA.nii.gz"
   "stats/mean_FA_skeleton.nii.gz"
   "stats/mean_FA_skeleton_mask.nii.gz"

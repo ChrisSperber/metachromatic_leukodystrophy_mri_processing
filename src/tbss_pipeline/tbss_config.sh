@@ -38,7 +38,7 @@ TEMPLATE_11_12_PATH="$TEMPLATE_DIR/SACT_11_12_DT_fa.nii.gz"
 
 # ---------- TBSS template choice ----------
 # One of: fmrib58 | sact_6_12 | sact_11_12
-TEMPLATE_CHOICE="sact_6_12"
+TEMPLATE_CHOICE="fmrib58"
 
 case "$TEMPLATE_CHOICE" in
   fmrib58)
@@ -71,4 +71,4 @@ SKELETON_THR="0.15"
 
 # Optional extra thresholds (0 to n) for testing purposes; space-separated string
 # e.g., "0.15 0.30" or empty ""
-SKELETON_THR_TESTS="0.12 0.20"
+SKELETON_THR_TESTS="0.12 0.18 0.20"
