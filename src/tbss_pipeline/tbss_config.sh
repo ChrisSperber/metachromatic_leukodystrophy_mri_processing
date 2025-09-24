@@ -71,4 +71,4 @@ SKELETON_THR="0.15"
 
 # Optional extra thresholds (0 to n) for testing purposes; space-separated string
 # e.g., "0.15 0.30" or empty ""
-SKELETON_THR_TESTS="0.12 0.18 0.20"
+SKELETON_THR_TESTS="0.12 0.20"
