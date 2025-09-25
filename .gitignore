@@ -4,6 +4,17 @@ temp_images/
 *.png
 origdata/
 
+# FSL/TBSS outputs (heavy/regenerable)
+# Ignore everything in outputs/ by default…
+src/tbss_pipeline/outputs/**
+# …but allow directory traversal for whitelisting:
+!src/tbss_pipeline/outputs/**/
+
+# whitelist relevant FSL/TBSS outputs
+!src/tbss_pipeline/outputs/**/FA_file_manifest.tsv
+!src/tbss_pipeline/outputs/**/params.txt
+!src/tbss_pipeline/outputs/**/stats/mean_FA_skeleton_mask.nii.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
