@@ -20,6 +20,7 @@ class Cols:
     DATE_TAG: str = "Date_Tag"
     IMAGE_MODALITY: str = "Image_Modality"
     DTI_METHOD: str = "DTI_Method"
+    SUBJECT_TYPE: str = "Subject_Type"  # Column name for patient/control tag
 
 
 def get_unique_row(df: pd.DataFrame, column: str, substring: str) -> pd.Series:
