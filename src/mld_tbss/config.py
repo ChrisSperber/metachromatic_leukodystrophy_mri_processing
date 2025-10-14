@@ -12,6 +12,8 @@ ORIGINAL_DATA_PATIENTS_XLS = ORIGINAL_DATA_ROOT_DIR / "Multispectral_patients.xl
 ORIGINAL_DATA_CONTROLS_XLS = ORIGINAL_DATA_ROOT_DIR / "Multispectral_controls.xlsx"
 PATIENT_ID_MAPPING = ORIGINAL_DATA_ROOT_DIR / "initial_lookup.xlsx"
 
+MP2RAGE = "MP2RAGE"
+
 FA_COPY_DIR = TEMPORARY_DATA_DIR / "FA_images"
 MO_COPY_DIR = TEMPORARY_DATA_DIR / "MO_images"
 MD_COPY_DIR = TEMPORARY_DATA_DIR / "MD_images"
@@ -23,5 +25,10 @@ COPY_FOLDER_DICT = {
     "MD": MD_COPY_DIR,
     "MO": MO_COPY_DIR,
     "S0": S0_COPY_DIR,
-    "T1": T1_COPY_DIR,
+    MP2RAGE: T1_COPY_DIR,
 }
+
+UNKNOWN = "Unknown"
+NOT_APPLICABLE = "Not_applicable"
+PATIENT = "patient"
+CONTROL = "control"
