@@ -4,7 +4,9 @@
 # NOTE: FSL and ANTs are required. FSL installation is straightforward with apt. ANTs can be installed according to
 # https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS (requiring also cmake and a c++ compiler) and adding 
 # it to the PATH e.g. via echo 'export PATH="'${workingDir}'/install/bin:$PATH"' >> ~/.bashrc
-set -euo pipefail
+set -eEuo pipefail
+trap 'echo "ERROR at line $LINENO: $BASH_COMMAND" >&2' ERR
+export LC_NUMERIC=C
 
 # --------- config ---------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,8 +17,12 @@ SRC_DIR="$DATA_DIR/T1_images"           # input folder
 OUT_DIR="$DATA_DIR/T1_images_preproc"   # output folder
 
 # Skull-strip (FSL BET) parameters
-FRAC=0.35   # 0.25–0.45 typical; higher = tighter/more aggressive
+FRAC=0.5   # 0.25–0.45 typical; higher = tighter/more aggressive
 GRAD=0      # vertical gradient tweak (usually 0)
+
+ncores=$(nproc)
+threads=$(( ncores > 1 ? ncores - 1 : 1 ))
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="$threads"
 
 # -------------------------
 
@@ -46,28 +52,31 @@ n4corr() {
 }
 
 bet_brain() {
-  local in="$1" out_brain="$2" out_mask="$3"
+  local in="$1" out_brain="$2"
   bet "$in" "$out_brain" -R -f "$FRAC" -g "$GRAD" -m
-  # BET writes mask as ${out_brain%.*}_mask.nii.gz ; move to requested name if different
-  local betmask="${out_brain%.*}_mask.nii.gz"
-  [[ -f "$betmask" ]] && mv -f "$betmask" "$out_mask"
 }
 
 robust_norm_01() {
   local in="$1" mask="$2" out="$3"
-  # Compute 2nd and 98th percentiles within brain
+
+  # Get percentiles and strip whitespace; format as plain decimals
   local P2 P98 rng
-  P2=$(fslstats "$in" -k "$mask" -P 2)
-  P98=$(fslstats "$in" -k "$mask" -P 98)
-  rng=$(echo "$P98 - $P2" | bc -l)
+  P2=$(fslstats "$in" -k "$mask" -P 2  | awk '{printf "%.9f",$1}')
+  P98=$(fslstats "$in" -k "$mask" -P 98 | awk '{printf "%.9f",$1}')
+
+  # rng = P98 - P2
+  rng=$(awk -v a="$P98" -v b="$P2" 'BEGIN{printf "%.9f", a-b}')
+
   # Guard against degenerate range
-  if [[ $(echo "$rng <= 0" | bc -l) -eq 1 ]]; then
+  if [[ $(awk -v r="$rng" 'BEGIN{print (r<=0)?1:0}') -eq 1 ]]; then
     echo "Warning: non-positive dynamic range (P98<=P2). Writing zero image."
     fslmaths "$in" -mul 0 -mas "$mask" "$out"
     return
   fi
-  # Scale to [0,1] within brain; clamp and reapply mask to zero background
-  fslmaths "$in" -sub "$P2" -div "$rng" -thr 0 -uthr 1 -mas "$mask" "$out"
+
+  # Scale to [0,1] within brain; pass numeric literals (no quotes)
+  # shellcheck disable=SC2086
+  fslmaths "$in" -sub $P2 -div $rng -thr 0 -uthr 1 -mas "$mask" "$out"
 }
 
 process_one() {
@@ -79,7 +88,6 @@ process_one() {
   local den="${OUT_DIR}/${base}_den.nii.gz"
   local bc="${OUT_DIR}/${base}_bc.nii.gz"
   local brain="${OUT_DIR}/${base}_brain.nii.gz"
-  local mask="${OUT_DIR}/${base}_brain_mask.nii.gz"
   local norm="${OUT_DIR}/${base}_norm.nii.gz"
 
   echo ">>> $fname"
@@ -92,8 +100,25 @@ process_one() {
   [[ -s "$bc" ]]
 
   echo "  - skull strip (BET)"
-  bet_brain "$bc" "$brain" "$mask"
-  [[ -s "$brain" && -s "$mask" ]]
+  bet_brain "$bc" "$brain"
+  [[ -s "$brain" ]]
+
+# derive mask path that BET produced next to $brain
+local mask
+if [[ "$brain" == *.nii.gz ]]; then
+  mask="${brain%.nii.gz}_mask.nii.gz"
+else
+  mask="${brain%.nii}_mask.nii.gz"
+fi
+[[ -s "$mask" ]]
+
+  # optional: sanity check mask size
+  local vox
+  vox=$(fslstats "$mask" -V | awk '{print $1}')
+  if [[ -z "$vox" || "$vox" -lt 10000 ]]; then
+    echo "BET produced a suspiciously small mask ($vox voxels)." >&2
+    return 1
+  fi
 
   echo "  - robust [0,1] intensity normalization (2–98% within brain)"
   robust_norm_01 "$brain" "$mask" "$norm"
@@ -101,7 +126,6 @@ process_one() {
 
   echo "OK: ${norm} (mask: ${mask})"
 }
-
 
 # ---- main loop ----
 n_found=0
