@@ -17,8 +17,9 @@ SRC_DIR="$DATA_DIR/T1_images"           # input folder
 OUT_DIR="$DATA_DIR/T1_images_preproc"   # output folder
 
 # Skull-strip (FSL BET) parameters
-FRAC=0.5   # 0.25–0.45 typical; higher = tighter/more aggressive
-GRAD=0      # vertical gradient tweak (usually 0)
+FRAC_LOOSE=0.20   # for quick pre-mask (bigger mask, keeps skull)
+FRAC_FINAL=0.35   # for final mask after N4
+GRAD=0            # BET vertical gradient (usually 0)
 
 ncores=$(nproc)
 threads=$(( ncores > 1 ? ncores - 1 : 1 ))
@@ -46,14 +47,23 @@ denoise() {
 }
 
 n4corr() {
-  local in="$1" out="$2"
-  # ANTs N4 bias correction
-  N4BiasFieldCorrection -d 3 -i "$in" -o "$out" -v 1
+  local in="$1" out="$2" wmask="${3:-}"
+  if [[ -n "$wmask" && -s "$wmask" ]]; then
+    N4BiasFieldCorrection -d 3 -i "$in" -w "$wmask" -o "$out" -v 1
+  else
+    N4BiasFieldCorrection -d 3 -i "$in" -o "$out" -v 1
+  fi
 }
 
-bet_brain() {
+bet_quick_mask() {
+  local in="$1" # outputs: ${in%.nii*}_head_mask.nii.gz
+  bet "$in" "${in%.*.*}_head" -R -f "$FRAC_LOOSE" -g "$GRAD" -m
+}
+
+bet_final() {
   local in="$1" out_brain="$2"
-  bet "$in" "$out_brain" -R -f "$FRAC" -g "$GRAD" -m
+  # -B cleans bias inside BET; works better *after* N4 + crop
+  bet "$in" "$out_brain" -R -B -f "$FRAC_FINAL" -g "$GRAD" -m
 }
 
 robust_norm_01() {
@@ -92,19 +102,28 @@ process_one() {
 
   echo ">>> $fname"
   echo "  - denoise"
-  denoise "$in" "$den"
-  [[ -s "$den" ]]
+denoise "$in" "$den"
+[[ -s "$den" ]]
 
-  echo "  - N4 bias correction"
-  n4corr "$den" "$bc"
-  [[ -s "$bc" ]]
+echo "  - quick loose BET pre-mask (guides N4)"
+bet_quick_mask "$den"
+quick_mask="${den%.*.*}_head_mask.nii.gz"
+[[ -s "$quick_mask" ]]
 
-  echo "  - skull strip (BET)"
-  bet_brain "$bc" "$brain"
-  [[ -s "$brain" ]]
+echo "  - N4 bias correction (weighted by pre-mask)"
+n4corr "$den" "$bc" "$quick_mask"
+[[ -s "$bc" ]]
 
-# derive mask path that BET produced next to $brain
-local mask
+echo "  - crop neck (helps final BET)"
+bc_crop="${OUT_DIR}/${base}_bc_crop.nii.gz"
+robustfov -i "$bc" -r "$bc_crop"
+[[ -s "$bc_crop" ]]
+
+echo "  - final skull strip (BET on N4-corrected, cropped image)"
+bet_final "$bc_crop" "$brain"
+[[ -s "$brain" ]]
+
+# derive mask next to $brain
 if [[ "$brain" == *.nii.gz ]]; then
   mask="${brain%.nii.gz}_mask.nii.gz"
 else
@@ -112,19 +131,24 @@ else
 fi
 [[ -s "$mask" ]]
 
-  # optional: sanity check mask size
-  local vox
-  vox=$(fslstats "$mask" -V | awk '{print $1}')
-  if [[ -z "$vox" || "$vox" -lt 10000 ]]; then
-    echo "BET produced a suspiciously small mask ($vox voxels)." >&2
-    return 1
-  fi
+# optional tiny fixes to avoid cortical pinholes
+fslmaths "$mask" -fillh -dilM "${mask%.nii.gz}_fix.nii.gz"
+if [[ -s "${mask%.nii.gz}_fix.nii.gz" ]]; then
+  mask="${mask%.nii.gz}_fix.nii.gz"
+fi
 
-  echo "  - robust [0,1] intensity normalization (2–98% within brain)"
-  robust_norm_01 "$brain" "$mask" "$norm"
-  [[ -s "$norm" ]]
+# sanity check mask volume
+vox=$(fslstats "$mask" -V | awk '{print $1}')
+if [[ -z "$vox" || "$vox" -lt 10000 ]]; then
+  echo "Final BET produced a small mask ($vox voxels). Consider tweaking FRAC_FINAL." >&2
+  return 1
+fi
 
-  echo "OK: ${norm} (mask: ${mask})"
+echo "  - robust [0,1] intensity normalization (2–98% within brain)"
+robust_norm_01 "$brain" "$mask" "$norm"
+[[ -s "$norm" ]]
+
+echo "OK: ${norm} (mask: ${mask})"
 }
 
 # ---- main loop ----
