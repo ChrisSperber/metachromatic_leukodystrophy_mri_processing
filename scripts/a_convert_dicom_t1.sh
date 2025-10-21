@@ -6,7 +6,7 @@ set -euo pipefail
 
 # --- USER SETTINGS ---
 script_dir="$(dirname "$(realpath "$0")")"
-projects_path="$(realpath "$script_dir/../../..")"
+projects_path="$(realpath "$script_dir/../..")"
 
 input_dir="$projects_path/mld_data/controls/T1" # main folder containing subfolders with DICOMs
 output_dir="$projects_path/mld_data/controls/T1_nifti" # NIfTI output directory

@@ -287,7 +287,7 @@ for path in COPY_FOLDER_DICT.values():
 
 for index, row in data_df_clean.iterrows():
     img_path = ORIGINAL_DATA_ROOT_DIR / row[IMAGE_PATH_ORIGINAL]
-    img = nib.load(img_path)
+    img = nib.load(img_path)  # pyright: ignore[reportPrivateImportUsage]
 
     if not isinstance(img, (nib.nifti1.Nifti1Image)):
         raise TypeError(f"Expected NIfTI, got {type(img).__name__}")
@@ -342,7 +342,7 @@ for index, row in data_df_clean.iterrows():
     # clip FA values >1
     if row[Cols.IMAGE_MODALITY] == "FA":
         # load FA image
-        img = nib.load(orig_file)
+        img = nib.load(orig_file)  # pyright: ignore[reportPrivateImportUsage]
 
         if not isinstance(img, (nib.nifti1.Nifti1Image)):
             raise TypeError(f"Expected NIfTI, got {type(img).__name__}")
@@ -352,8 +352,10 @@ for index, row in data_df_clean.iterrows():
         # clip values >1 to 1
         data = np.clip(data, 0, 1)
 
-        clipped_img = nib.Nifti1Image(data, nifti.affine, nifti.header)
-        nib.save(clipped_img, target_file)
+        clipped_img = nib.Nifti1Image(  # pyright: ignore[reportPrivateImportUsage]
+            data, nifti.affine, nifti.header
+        )
+        nib.save(clipped_img, target_file)  # pyright: ignore[reportPrivateImportUsage]
     else:
         shutil.copy2(orig_file, target_file)
 

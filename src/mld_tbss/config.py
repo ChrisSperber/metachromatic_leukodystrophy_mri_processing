@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-ORIGINAL_DATA_ROOT_DIR = Path(__file__).parents[4] / "mld_data"
+ORIGINAL_DATA_ROOT_DIR = Path(__file__).parents[3] / "mld_data"
 TEMPORARY_DATA_DIR = Path(__file__).parents[2] / "temp_images"
 
 ORIGINAL_DIFFUSION_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "NODDI"
