@@ -251,10 +251,6 @@ ct_all = pd.crosstab(
 # Identify rows with any value > 1
 invalid_rows = ct_all[ct_all[REQUIRED_MODALITIES].gt(1).any(axis=1)]
 if not invalid_rows.empty:
-    # Print offending IDs and dates
-    print("WARNING: Found rows with duplicate (>1) modality counts:")
-    for _, row in invalid_rows.iterrows():
-        print(f"  Subject_ID={row['Subject_ID']}, Date={row['Date_T']}")
     raise ValueError("Found rows with duplicate (>1) modality counts.")
 else:
     print("No rows with duplicate (>1) modality counts found, moving on.")
