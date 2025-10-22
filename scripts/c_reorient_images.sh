@@ -6,8 +6,8 @@ export LC_NUMERIC=C
 
 # --- config ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-SRC_DIR="$PROJECT_ROOT/temp_images"     # image folder
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+SRC_DIR="$PROJECT_DIR/temp_images"     # image folder
 
 OVERWRITE_IN_PLACE=true    # set false to write .reoriented.nii.gz alongside originals
 CLEAN_NAN_INF=true         # set false to skip NaN/Inf cleanup
