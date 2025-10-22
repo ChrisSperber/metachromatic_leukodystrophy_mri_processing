@@ -26,6 +26,7 @@ from mld_tbss.config import (
     ORIGINAL_MP2RAGE_PATIENTS_DATA_DIR,
     PATIENT,
     PATIENT_ID_MAPPING,
+    TEMPORARY_DATA_DIR,
     UNKNOWN,
 )
 from mld_tbss.utils import (
@@ -493,10 +494,6 @@ for index, row in data_df_clean.iterrows():
         raise ValueError(msg)
 
 # %%
-# drop original image path with confidential information from table
-data_df_clean = data_df_clean.drop(IMAGE_PATH_ORIGINAL, axis=1)
-
-# %%
 # format df columns
 # round age to two decimals
 data_df_clean[Cols.AGE] = data_df_clean[Cols.AGE].apply(
@@ -511,8 +508,17 @@ for col in cols_to_convert2int:
     )
 
 # %%
-# store data
+# drop original image path with confidential information from table
+data_df_clean_redacted = data_df_clean.drop(IMAGE_PATH_ORIGINAL, axis=1)
+
+# %%
+# store data in repo for documentation
 output_name = Path(__file__).with_suffix(".csv")
+data_df_clean_redacted.to_csv(output_name, index=False, sep=";")
+
+# %%
+# store full data in temp images folder for follow up projects
+output_name = TEMPORARY_DATA_DIR / "full_dti_datasets_pats_controls.csv"
 data_df_clean.to_csv(output_name, index=False, sep=";")
 
 # %%

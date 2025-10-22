@@ -3,7 +3,7 @@
 from pathlib import Path
 
 ORIGINAL_DATA_ROOT_DIR = Path(__file__).parents[3] / "mld_data"
-TEMPORARY_DATA_DIR = Path(__file__).parents[2] / "temp_images"
+TEMPORARY_DATA_DIR = Path(__file__).parents[3] / "temp_images"
 
 ORIGINAL_DIFFUSION_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "NODDI"
 ORIGINAL_MP2RAGE_PATIENTS_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "patients" / "MP2RAGE"
@@ -19,7 +19,6 @@ MO_COPY_DIR = TEMPORARY_DATA_DIR / "MO_images"
 MD_COPY_DIR = TEMPORARY_DATA_DIR / "MD_images"
 S0_COPY_DIR = TEMPORARY_DATA_DIR / "S0_images"
 T1_COPY_DIR = TEMPORARY_DATA_DIR / "T1_images"
-FA_TEMPLATES_DIR = TEMPORARY_DATA_DIR / "templates"
 COPY_FOLDER_DICT = {
     "FA": FA_COPY_DIR,
     "MD": MD_COPY_DIR,
