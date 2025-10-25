@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # segment all T1 that were copied into /temp_images/T1 by SnythSeg to create a brain segmentation and a brain mask
 # in /temp_images/T1_images_segm
-# steps: denoise -> crop -> skull stripping -> within-brain [0,1] intensity normalization of the skull-stripped image
+# steps: denoise -> crop -> skull stripping & cortical segmentation
 # NOTE: Freesurfer >v8.x, FSL, and ANTs are required. ANTs can be installed according to
 # https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS (requiring also cmake and a c++ compiler) and adding
 # it to the PATH
@@ -70,15 +70,15 @@ robust_norm_01() {
 # --------- core per-file pipeline ----------
 process_one() {
   local in_t1="$1"
-  local base out_den out_rob seg mask brain norm01
+  local base out_den out_rob seg mask brain
 
   base="$(base_noext "$in_t1")"
 
   out_den="$OUT_DIR/${base}_den.nii.gz"
+  out_rob="$OUT_DIR/${base}_den_rfov.nii.gz"
   seg="$OUT_DIR/${base}_synthseg_labels.nii.gz"
   mask="$OUT_DIR/${base}_brain_mask.nii.gz"
   brain="$OUT_DIR/${base}_brain.nii.gz"
-  norm01="$OUT_DIR/${base}_brain_norm01.nii.gz"
 
   echo "[$(timestamp)] >>> Start: $base"
 
@@ -91,8 +91,7 @@ process_one() {
   fi
 
   # 2) crop neck to reduce overall image size
-  out_rob="$OUT_DIR/${base}_den_rfov.nii.gz"
-  robustfov -i "$out_den" -r "$out_rob"
+    robustfov -i "$out_den" -r "$out_rob"
 
   # 3) SynthSeg (labels). Output format is inferred from extension.
   if [[ ! -f "$seg" ]]; then
@@ -119,13 +118,6 @@ process_one() {
     fslmaths "$out_rob" -mas "$mask" "$brain"
   else
     echo "[$(timestamp)]   - skip skull-strip (exists)"
-  fi
-
-  # 5) Robust [0,1] normalization within mask (2–98th pct)
-  if [[ ! -f "$norm01" ]]; then
-    robust_norm_01 "$out_rob" "$mask" "$norm01"
-  else
-    echo "[$(timestamp)]   - skip normalization (exists)"
   fi
 }
 
