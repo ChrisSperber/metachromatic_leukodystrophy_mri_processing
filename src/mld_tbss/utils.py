@@ -1,4 +1,4 @@
-"""Utility functions and constants for MLD TBSS project."""
+"""Utility functions and constants for MLD MRI processing."""
 
 from dataclasses import dataclass
 

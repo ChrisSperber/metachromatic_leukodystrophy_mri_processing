@@ -38,9 +38,11 @@ SYNTHSEG_LABEL_PATH = "Full_Image_Path_Synthseg_Labels"
 BRAIN_SKULLSTRIPPED_PATH = "Full_Image_Path_Brain_Skullstripped"
 
 # overlay settings
-FA_ALPHA = 0.45  # transparency of overlays
+FA_ALPHA = 0.7  # transparency of FA overlays
+SEGMENTATION_ALPHA = 0.65  # transparency of segmentation overlays
 AXIAL_SLICES_FRAC = (0.30, 0.50, 0.70)  # relative positions through z
 FIGSIZE = (11.7, 8.3)  # A4 landscape inches
+FA_HIDE_CUTOFF = 0.15  # cutoff below which FA values are set to zero for visualisation
 
 FA = "FA"
 RELEVANT_IMAGES = [MP2RAGE, FA]
@@ -101,9 +103,13 @@ def _load_nifti(path: Path):
     return img, data
 
 
-def _resample_like(moving_img, target_img, interpolation="continuous"):
+def _resample_like(moving_img, target_img, interpolation: str = "continuous"):
     return resample_to_img(
-        moving_img, target_img, interpolation=interpolation, force_resample=True
+        moving_img,
+        target_img,
+        interpolation=interpolation,
+        force_resample=True,
+        copy_header=True,
     )
 
 
@@ -168,6 +174,15 @@ with PdfPages(QC_PDF_PATH) as pdf:
         fa_r_d = np.asarray(fa_r.get_fdata(), dtype=np.float32)  # type: ignore
         lab_r_d = np.asarray(lab_r.get_fdata(), dtype=np.int32)  # type: ignore
 
+        # create mask to hide very low FA values
+        fa_mask = fa_r_d > FA_HIDE_CUTOFF
+        fa_display = np.ma.masked_where(~fa_mask, fa_r_d)
+        # Robust FA window
+        if fa_mask.any():
+            fa_vmin, fa_vmax = np.percentile(fa_r_d[fa_mask], [1, 99])
+        else:
+            fa_vmin, fa_vmax = float(fa_r_d.min()), float(fa_r_d.max())
+
         # remap Synthseg Freesurfer labels to ordinal scale
         lab_r_d = _relabel_to_ordinal(lab_r_d)
 
@@ -191,7 +206,17 @@ with PdfPages(QC_PDF_PATH) as pdf:
             ax = fig.add_subplot(gs[0, j])
             ax.imshow(np.rot90(mp2[:, :, z]), cmap="gray", vmin=mp2_vmin, vmax=mp2_vmax)
             ax.imshow(
-                np.rot90(fa_r_d[:, :, z]), alpha=FA_ALPHA, vmin=fa_vmin, vmax=fa_vmax
+                np.rot90(mp2[:, :, z]),
+                cmap="gray",
+                vmin=float(mp2.min()),
+                vmax=float(mp2.max()),
+            )
+            ax.imshow(
+                np.rot90(fa_display[:, :, z]),
+                cmap="inferno",
+                vmin=fa_vmin,
+                vmax=fa_vmax,
+                alpha=FA_ALPHA,
             )
             ax.set_axis_off()
             if j == 0:
@@ -207,7 +232,7 @@ with PdfPages(QC_PDF_PATH) as pdf:
                 cmap=lab_cmap,
                 vmin=0,
                 vmax=n_classes,
-                alpha=0.45,
+                alpha=SEGMENTATION_ALPHA,
             )
             ax.set_axis_off()
             if j == 0:

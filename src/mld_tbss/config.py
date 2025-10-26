@@ -1,4 +1,4 @@
-"""Path and configs for MLD TBSS project."""
+"""Path and configs for MLD MRI processing."""
 
 from pathlib import Path
 
