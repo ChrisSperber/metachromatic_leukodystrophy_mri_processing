@@ -26,7 +26,7 @@ COPY_FOLDER_DICT = {
     "S0": S0_COPY_DIR,
     MP2RAGE: T1_COPY_DIR,
 }
-T1_PREPROC_DIR = TEMPORARY_DATA_DIR / "T1_images_preproc"
+T1_SEGMENTED_DIR = TEMPORARY_DATA_DIR / "T1_images_segm"
 
 UNKNOWN = "Unknown"
 NOT_APPLICABLE = "Not_applicable"

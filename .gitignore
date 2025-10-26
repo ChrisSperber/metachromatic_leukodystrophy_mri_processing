@@ -1,6 +1,7 @@
 # Custom settings
 .vscode/
 *.png
+*_image_qc.pdf
 
 # FSL/TBSS outputs (heavy/regenerable)
 # Ignore everything in outputs/ by default…
