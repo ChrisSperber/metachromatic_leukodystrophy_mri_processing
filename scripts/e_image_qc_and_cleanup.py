@@ -52,11 +52,11 @@ FULL_PATH_TO_IMAGE = "Full_Image_Path"
 # collect file links
 data_df = pd.read_csv(Path(__file__).parent / "b_collect_and_verify_data.csv", sep=";")
 data_df = data_df[data_df[Cols.IMAGE_MODALITY].isin(RELEVANT_IMAGES)]
-for _, row in data_df.iterrows():
+for index, row in data_df.iterrows():
     if row[Cols.IMAGE_MODALITY] == FA:
-        data_df[FULL_PATH_TO_IMAGE] = COPY_FOLDER_DICT[FA] / row[Cols.FILENAME]
+        data_df.loc[index, FULL_PATH_TO_IMAGE] = COPY_FOLDER_DICT[FA] / row[Cols.FILENAME]  # type: ignore
     elif row[Cols.IMAGE_MODALITY] == MP2RAGE:
-        data_df[FULL_PATH_TO_IMAGE] = COPY_FOLDER_DICT[MP2RAGE] / row[Cols.FILENAME]
+        data_df.loc[index, FULL_PATH_TO_IMAGE] = COPY_FOLDER_DICT[MP2RAGE] / row[Cols.FILENAME]  # type: ignore
     else:
         raise ValueError(f"Invalid modality {row[Cols.IMAGE_MODALITY]}")
 
