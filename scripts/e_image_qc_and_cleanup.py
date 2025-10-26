@@ -24,7 +24,7 @@ from nilearn.image import resample_to_img
 from mld_tbss.config import COPY_FOLDER_DICT, MP2RAGE, T1_SEGMENTED_DIR
 from mld_tbss.utils import Cols
 
-DO_CLEANUP = False
+DO_CLEANUP = True
 QC_PDF_PATH = Path(__file__).parent / "e_image_qc.pdf"
 
 IMAGE_SUFFIXES_TO_DELETE = [
@@ -39,7 +39,7 @@ BRAIN_SKULLSTRIPPED_PATH = "Full_Image_Path_Brain_Skullstripped"
 
 # overlay settings
 FA_ALPHA = 0.7  # transparency of FA overlays
-SEGMENTATION_ALPHA = 0.65  # transparency of segmentation overlays
+SEGMENTATION_ALPHA = 0.6  # transparency of segmentation overlays
 AXIAL_SLICES_FRAC = (0.30, 0.50, 0.70)  # relative positions through z
 FIGSIZE = (11.7, 8.3)  # A4 landscape inches
 FA_HIDE_CUTOFF = 0.15  # cutoff below which FA values are set to zero for visualisation
@@ -248,8 +248,8 @@ print(f"QC PDF written to: {QC_PDF_PATH}")
 # %%
 # Cleanup
 if DO_CLEANUP:
+    print("Doing cleanup of intermediate segmentation image files.")
     for file in T1_SEGMENTED_DIR.iterdir():
-        print("Doing cleanup of intermediate segmentation image files.")
         if not file.is_file():
             continue
         if any(file.name.endswith(suf) for suf in IMAGE_SUFFIXES_TO_DELETE):
