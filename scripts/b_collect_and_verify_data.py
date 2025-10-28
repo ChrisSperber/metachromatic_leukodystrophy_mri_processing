@@ -34,7 +34,7 @@ from mld_tbss.utils import (
     get_unique_row,
 )
 
-RELEVANT_IMAGE_TAGS_DTI = ["dti_FA", "dti_MD", "dti_MO", "dti_S0"]
+RELEVANT_IMAGE_TAGS_DTI = ["dti_FA", "dti_MD"]
 RELEVANT_IMAGE_TAGS_T1_PATIENTS = ["MP2.MP2"]
 PATIENT_PATH_TAG = "patients"
 CONTROLS_PATH_TAG = "controls"
@@ -48,7 +48,7 @@ IMAGE_PATH_ORIGINAL = "Image_Path_Orig"
 MALE = "Male"
 FEMALE = "Female"
 
-REQUIRED_MODALITIES = ["FA", "MD", "MO", "S0", MP2RAGE]
+REQUIRED_MODALITIES = ["FA", "MD", MP2RAGE]
 
 SHEET_NAME_PATIENT_XLS = "DTI_multishell"
 SHEET_NAME_PATIENT_XLS_ALL_DATA = "all_selected"
@@ -322,13 +322,6 @@ for index, row in data_df_clean.iterrows():
         vmin, vmax = data.min(), data.max()
         if vmin < 0 or vmax > MAX_ACCEPTABLE_FA_VAL:
             msg = f"Invalid values found for FA map {row[IMAGE_PATH_ORIGINAL]}"
-            raise ValueError(msg)
-    # check data range of MO data
-    if row[Cols.IMAGE_MODALITY] == "MO":
-        data = nifti.get_fdata()
-        vmin, vmax = data.min(), data.max()
-        if vmin < -1 or vmax > 1:
-            msg = f"Invalid values found for MO map {row[IMAGE_PATH_ORIGINAL]}"
             raise ValueError(msg)
 
     # copy files into temporary data folder
