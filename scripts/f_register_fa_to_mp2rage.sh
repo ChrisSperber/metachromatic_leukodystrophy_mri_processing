@@ -16,7 +16,7 @@ T1_SEGMENTATION_DIR="$DATA_DIR/T1_images_segm"   # folder containing skull-strip
 T1_SKULLSTRIPPED_TAG="_MP2RAGE_brain.nii.gz" # tag identifying skullstripped T1 images
 FA_TAG="_FA.nii.gz"
 MD_TAG="_MD.nii.gz"
-OUT_SUFFIX="_toT1.nii.gz"
+OUT_SUFFIX="toT1.nii.gz"
 
 mkdir -p "${OUTPUT_DIR}"
 
@@ -50,7 +50,7 @@ for FA_PATH in "$FA_INPUT_DIR"/*"$FA_TAG"; do
     antsRegistration \
         --dimensionality 3 \
         --float 0 \
-        --output ["${OUT_PREFIX}", "${OUT_PREFIX}Warped.nii.gz"] \
+        --output ["${OUT_PREFIX}", "${OUT_PREFIX}${OUT_SUFFIX}"] \
         --interpolation Linear \
         --use-histogram-matching 0 \
         --winsorize-image-intensities "[0.01,0.99]" \
@@ -69,7 +69,7 @@ for FA_PATH in "$FA_INPUT_DIR"/*"$FA_TAG"; do
         -r "$T1_BRAIN" \
         -n Linear \
         -t "${OUT_PREFIX}0GenericAffine.mat" \
-        -o "${OUTPUT_DIR}/${stem}_MD${OUT_SUFFIX}"
+        -o "${OUTPUT_DIR}/${stem}_MD_${OUT_SUFFIX}"
     fi
 
     count=$((count + 1))
