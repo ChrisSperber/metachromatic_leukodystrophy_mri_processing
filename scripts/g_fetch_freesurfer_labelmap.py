@@ -13,7 +13,6 @@ from mld_tbss.config import (
 )
 
 SUFFIX_LABEL_MAP = "_MP2RAGE_synthseg_labels.nii.gz"
-LUT_COLUMNS_TO_DROP = ["R", "G", "B", "A"]
 
 # %%
 # Get Freesurfer Path and fetch label map
@@ -41,10 +40,9 @@ with open(freesurfer_label_lut) as f:
         if len(parts) < 6:  # noqa: PLR2004
             continue  # malformed or non-data line
 
-        # parse: ID  NAME  R  G  B  A
+        # parse: ID  NAME
         try:
             idx = int(parts[0])
-            rgba = list(map(int, parts[-4:]))
             name = " ".join(parts[1:-4])
         except ValueError:
             continue  # skip non-integer or invalid lines
@@ -53,10 +51,6 @@ with open(freesurfer_label_lut) as f:
             {
                 "id": idx,
                 "name": name,
-                "R": rgba[0],
-                "G": rgba[1],
-                "B": rgba[2],
-                "A": rgba[3],
             }
         )
 
@@ -79,10 +73,6 @@ unique_values_list = [int(value) for value in unique_values_list]
 # %%
 # drop all labels that are not used in the segmentations
 lut_df_filtered = lut_df[lut_df["id"].isin(unique_values_list)]
-
-lut_df_filtered = lut_df_filtered.drop(
-    columns=[col for col in lut_df_filtered.columns if col in LUT_COLUMNS_TO_DROP]
-)
 
 # %%
 # save in local csv
