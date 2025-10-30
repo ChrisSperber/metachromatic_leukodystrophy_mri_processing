@@ -1,4 +1,8 @@
-"""Fetch and clean the Freesurfer Label map."""
+"""Fetch and clean the Freesurfer Label map.
+
+Requirements: An xls with a mapping of labels to meta structures was created as fetched by
+STRUCTURE_LABEL_MAP. This file was created manually.
+"""
 
 # %%
 import os
@@ -8,11 +12,21 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
-from mld_tbss.config import (
-    T1_SEGMENTED_DIR,
-)
+from mld_tbss.config import T1_SEGMENTED_DIR
 
 SUFFIX_LABEL_MAP = "_MP2RAGE_synthseg_labels.nii.gz"
+STRUCTURE_LABEL_MAP = (
+    Path(__file__).parents[1] / "src" / "freesurfer_labelmap_w_structure_labels.xlsx"
+)
+
+HEMISPHERE = "Hemisphere"
+LABEL = "Label"
+
+LEFT = "Left"
+RIGHT = "Right"
+NONE = "None"
+RIGHT_TAGS = ["Right", "-rh-"]
+LEFT_TAGS = ["Left", "-lh-"]
 
 # %%
 # Get Freesurfer Path and fetch label map
@@ -73,6 +87,22 @@ unique_values_list = [int(value) for value in unique_values_list]
 # %%
 # drop all labels that are not used in the segmentations
 lut_df_filtered = lut_df[lut_df["id"].isin(unique_values_list)]
+
+lut_df_filtered.rename(columns={"name": LABEL}, inplace=True)
+
+# %% get structure labels and derive hemisphere labels
+structure_mapping_df = pd.read_excel(STRUCTURE_LABEL_MAP)
+lut_df_filtered = lut_df_filtered.merge(
+    right=structure_mapping_df, how="left", left_on=LABEL, right_on=LABEL
+)
+lut_df_filtered[HEMISPHERE] = NONE
+for index, row in lut_df_filtered.iterrows():
+    label = row[LABEL]
+    if any(tag in label for tag in RIGHT_TAGS):
+        lut_df_filtered.loc[index, HEMISPHERE] = RIGHT  # type: ignore
+    elif any(tag in label for tag in LEFT_TAGS):
+        lut_df_filtered.loc[index, HEMISPHERE] = LEFT  # type: ignore
+
 
 # %%
 # save in local csv
