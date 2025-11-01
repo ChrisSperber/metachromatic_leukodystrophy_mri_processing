@@ -1,0 +1,10 @@
+=== System & Tool Versions (20251101T215620Z UTC) ===
+OS:        Ubuntu 22.04.5 LTS (Jammy Jellyfish)
+Kernel:    Linux 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025
+FreeSurfer: freesurfer-linux-ubuntu22_x86_64-8.1.0-20250719-f30dfed
+FSL:        6.0.7.18
+ANTs:       ANTs Version: 2.6.3.post1-g0e979ef
+GPU:        NVIDIA GeForce GTX 1650, 560.94
+
+FREESURFER_HOME: /usr/local/freesurfer/8.1.0
+FSLDIR:          /home/chris/fsl
