@@ -14,8 +14,6 @@ import pandas as pd
 from mld_tbss.config import T1_SEGMENTED_DIR
 from mld_tbss.utils import combine_hemispheres, voronoi_subparcellate
 
-DEBUG_TEST_FOLDER = T1_SEGMENTED_DIR.parent / "test"
-
 FREESURFER_LABELMAP = Path(__file__).parent / "g_fetch_freesurfer_labelmap.csv"
 SUFFIX_LABEL_MAP = "_MP2RAGE_synthseg_labels.nii.gz"
 SUFFIX_LABEL_OUTPUT = "_MP2RAGE_WM_voronoi_labels.nii.gz"
@@ -62,7 +60,7 @@ freesurfer_labelmap_wm_right = freesurfer_labelmap_full[
 # %%
 # create Vonoroi mapping
 count = 0
-for file in DEBUG_TEST_FOLDER.iterdir():
+for file in T1_SEGMENTED_DIR.iterdir():
     if file.is_file() and SUFFIX_LABEL_MAP in file.name:
         nifti = nib.load(file)  # pyright: ignore[reportPrivateImportUsage]
         data = nifti.get_fdata(dtype=np.float32).round().astype(np.int32)  # type: ignore
@@ -110,7 +108,7 @@ for file in DEBUG_TEST_FOLDER.iterdir():
         new_nifti.set_data_dtype(np.int32)
 
         output_filename = file.name.replace(SUFFIX_LABEL_MAP, SUFFIX_LABEL_OUTPUT)
-        output_path = DEBUG_TEST_FOLDER / output_filename
+        output_path = T1_SEGMENTED_DIR / output_filename
         nib.save(  # pyright: ignore[reportPrivateImportUsage]
             new_nifti, str(output_path)
         )
