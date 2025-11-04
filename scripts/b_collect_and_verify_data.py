@@ -1,7 +1,11 @@
 """Collect, copy, and verify all relevant diffusion data.
 
 Additionally, MP2RAGE T1 images required for normalisation are collected.
-Only patients with all images available are included.
+Only patients with all images available are included. Both patients and healthy controls are
+included.
+
+Output:
+- an anonymised csv listing all included subjects and sessions including various demographics
 """
 
 # %%

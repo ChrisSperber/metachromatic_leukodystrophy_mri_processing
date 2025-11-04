@@ -2,6 +2,10 @@
 
 Requirements: An xls with a mapping of labels to meta structures was created as fetched by
 STRUCTURE_LABEL_MAP. This file was created manually.
+
+Output:
+- a csv listing all regions included in the synthseg parcellation including numeric id, full name,
+    hemisphere, and larger structure (e.g. lobe)
 """
 
 # %%
