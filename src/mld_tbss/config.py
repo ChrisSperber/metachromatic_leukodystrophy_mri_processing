@@ -28,3 +28,5 @@ UNKNOWN = "Unknown"
 NOT_APPLICABLE = "Not_applicable"
 PATIENT = "patient"
 CONTROL = "control"
+
+OUTPUT_METRICS_DIR = Path(__file__).parents[2] / "MRI_output_metrics"
