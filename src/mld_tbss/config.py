@@ -29,4 +29,4 @@ NOT_APPLICABLE = "Not_applicable"
 PATIENT = "patient"
 CONTROL = "control"
 
-OUTPUT_METRICS_DIR = Path(__file__).parents[2] / "MRI_output_metrics"
+OUTPUT_METRICS_DIR = Path(__file__).parents[3] / "mld_MRI_output_metrics"
