@@ -11,7 +11,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
-from mld_tbss.config import T1_SEGMENTED_DIR
+from mld_tbss.config import NON_REQUIRED_LABEL_STRUCTURES_VORONOI, T1_SEGMENTED_DIR
 from mld_tbss.utils import combine_hemispheres, voronoi_subparcellate
 
 FREESURFER_LABELMAP = Path(__file__).parent / "g_fetch_freesurfer_labelmap.csv"
@@ -28,11 +28,6 @@ RIGHT = "Right"
 LEFT_CEREBRAL_WM = "Left-Cerebral-White-Matter"
 RIGHT_CEREBRAL_WM = "Right-Cerebral-White-Matter"
 
-# some labels that need to be removed for the present task
-WHITE_MATTER = "White_Matter"
-CEREBELLUM = "Cerebellum"
-BRAINSTEM = "Brainstem"
-NON_REQUIRED_LABEL_STRUCTURES = [WHITE_MATTER, CEREBELLUM, BRAINSTEM]
 REQUIRED_WM_LABELS_LEFT = [LEFT_CEREBRAL_WM]
 REQUIRED_WM_LABELS_RIGHT = [RIGHT_CEREBRAL_WM]
 
@@ -41,7 +36,7 @@ REQUIRED_WM_LABELS_RIGHT = [RIGHT_CEREBRAL_WM]
 freesurfer_labelmap_full = pd.read_csv(FREESURFER_LABELMAP, sep=";")
 # drop non required structure (like wm)
 freesurfer_labelmap = freesurfer_labelmap_full[
-    ~freesurfer_labelmap_full[STRUCTURE].isin(NON_REQUIRED_LABEL_STRUCTURES)
+    ~freesurfer_labelmap_full[STRUCTURE].isin(NON_REQUIRED_LABEL_STRUCTURES_VORONOI)
 ]
 # drop background
 freesurfer_labelmap = freesurfer_labelmap[freesurfer_labelmap[LABEL] != "Unknown"]

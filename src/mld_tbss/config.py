@@ -30,3 +30,11 @@ PATIENT = "patient"
 CONTROL = "control"
 
 OUTPUT_METRICS_DIR = Path(__file__).parents[3] / "mld_MRI_output_metrics"
+
+# labels that are to be ignored in the voronoi subparcellation of white matter;
+# white mitter itself must also be ignored
+WHITE_MATTER = "White_Matter"
+CEREBELLUM = "Cerebellum"
+BRAINSTEM = "Brainstem"
+CSF = "Ventricle_CSF"
+NON_REQUIRED_LABEL_STRUCTURES_VORONOI = [WHITE_MATTER, CEREBELLUM, BRAINSTEM, CSF]
