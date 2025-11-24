@@ -3,15 +3,14 @@
 Derived various imaging metrics based on the SynthSeg Segmentation, including
 - TIV
 - region/structure-wise relative volume
-- WM structure-wise
-    - relative volume
+- WM region/structure/whole brain-wise
     - FA median/90th percentile/% of volume >0.2
     - MD median/10th precentile
 
 Output:
     - 3 long CSVs storing all variables for all subjects and sessions
         - xxx_volumetric.csv for brain volumes
-        - xxx_A.csv for FA values
+        - xxx_FA.csv for FA values
         - xxx_MD.csv for MD values
     All outputs are stored in a dedicated folder OUTPUT_METRICS_DIR
 
