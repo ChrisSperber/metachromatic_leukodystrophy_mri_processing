@@ -48,25 +48,6 @@ base_noext() {
   printf "%s" "$f"
 }
 
-robust_norm_01() {
-  local in="$1" mask="$2" out="$3"
-
-  # Percentiles
-  local P2 P98 rng
-  P2=$(fslstats "$in" -k "$mask" -P 2  | awk '{printf "%.9f",$1}')
-  P98=$(fslstats "$in" -k "$mask" -P 98 | awk '{printf "%.9f",$1}')
-  rng=$(awk -v a="$P98" -v b="$P2" 'BEGIN{printf "%.9f", a-b}')
-
-  if (( $(awk -v r="$rng" 'BEGIN{print (r<=0)}') )); then
-    echo "Warning: non-positive dynamic range (P98<=P2). Writing zero image."
-    fslmaths "$in" -mul 0 -mas "$mask" "$out"
-    return
-  fi
-
-  # Normalize robustly to [0,1] inside mask
-  fslmaths "$in" -sub "$P2" -div "$rng" -thr 0 -uthr 1 -mas "$mask" "$out"
-}
-
 # --------- core per-file pipeline ----------
 process_one() {
   local in_t1="$1"
