@@ -16,6 +16,7 @@ Outputs:
 
 # %%
 import re
+import shutil
 from pathlib import Path
 
 import nibabel as nib
@@ -28,6 +29,7 @@ from mld_tbss.config import (
     ORIGINAL_SSFP_PATIENTS_DATA_DIR,
     PATIENT_ID_MAPPING,
     SSFP_COPY_DIR,
+    UNKNOWN,
 )
 from mld_tbss.utils import Cols
 
@@ -36,6 +38,8 @@ SAMPLE_DATA_CSV = Path(__file__).parents[1] / "b_collect_and_verify_data.csv"
 RELEVANT_IMAGE_TAGS_SSFP = ["_ssfp.200.nii", "_ssfp.1500.nii"]
 PATIENT_PATH_TAG = "patients"
 CONTROLS_PATH_TAG = "controls"
+
+SSFP_TIME = "SSFP_time"
 
 # %%
 sample_df = pd.read_csv(SAMPLE_DATA_CSV, sep=";")
@@ -115,6 +119,15 @@ for path in image_paths_list_ssfp_patients:
     img = nib.load(nifti_path)  # pyright: ignore[reportPrivateImportUsage]
     nib.save(img, outpath)  # pyright: ignore[reportPrivateImportUsage]
 
+patients_data_df = pd.DataFrame(
+    {
+        Cols.SUBJECT_ID: id_list_patients,
+        Cols.DATE_TAG: date_tags_list_patients,
+        Cols.FILENAME: new_image_names_list_patients,
+        SSFP_TIME: ssfp_time_list_patients,
+    }
+)
+
 
 # %%
 # collect and copy data - controls
@@ -122,9 +135,79 @@ for path in image_paths_list_ssfp_patients:
 id_list_controls = []
 ssfp_time_list_controls = []
 new_image_names_list_controls = []
+running_number_list_controls = []
+date_tags_list_controls = []
 
+for path in image_paths_list_ssfp_controls:
+    # get ID from initials
+    id = path.split("/")[2]
+    id_list_controls.append(id)
+    # date tag is set to Unknown for consistency
+    date_tag = UNKNOWN
+    date_tags_list_controls.append(date_tag)
+    # get SSFP time
+    filename = path.split("/")[-1]
+    if "200" in filename:
+        usecs = 200
+    elif "1500" in filename:
+        usecs = 1500
+    else:
+        msg = f"No SSFP usecs can be derived from {path}"
+        raise ValueError(msg)
+    ssfp_time_list_controls.append(usecs)
+    # get session running number to infer order
+    running_number = re.search(r"_(\d{1,2})\.nii\.gz$", path).group(1)  # type: ignore
+    running_number_list_controls.append(running_number)
+    # create new image name (without copying at this point)
+    new_image_name = f"subject_{id}_date_{date_tag}_SSFP_{usecs}.nii.gz"
+    new_image_names_list_controls.append(new_image_name)
+
+# select relevant controls' images
+controls_data_df = pd.DataFrame(
+    {
+        Cols.SUBJECT_ID: id_list_controls,
+        Cols.DATE_TAG: date_tags_list_controls,
+        Cols.FILENAME: new_image_names_list_controls,
+        "Running_number": running_number_list_controls,
+        SSFP_TIME: ssfp_time_list_controls,
+        "Original_image_path": image_paths_list_ssfp_controls,
+    }
+)
+# remove erroneous/duplciated data
+controls_data_df = controls_data_df[
+    controls_data_df[Cols.SUBJECT_ID] != "MLD119_prisma71"
+]
+
+# drop unique ID/SSFP_time combinations that do not have the maximum running number
+controls_data_df = (
+    controls_data_df.sort_values([Cols.SUBJECT_ID, SSFP_TIME, "Running_number"])
+    .drop_duplicates(subset=[Cols.SUBJECT_ID, SSFP_TIME], keep="last")
+    .reset_index(drop=True)
+)
+
+# %%
+# copy relevant controls' images
+for _, row in controls_data_df.iterrows():
+    src = ORIGINAL_DATA_ROOT_DIR / row["Original_image_path"]
+    dst = SSFP_COPY_DIR / row[Cols.FILENAME]
+    shutil.copy(src, dst)
+
+# %%
+# merge and store data dfs
+controls_data_df = controls_data_df.drop(
+    columns=["Running_number", "Original_image_path"]
+)
+if not controls_data_df.columns.equals(patients_data_df.columns):
+    raise ValueError("Column mismatch between DataFrames")
+
+data_df = pd.concat([patients_data_df, controls_data_df], ignore_index=True)
+
+output_name = Path(__file__).with_suffix(".csv")
+data_df.to_csv(output_name, index=False, sep=";")
 
 # %%
 # clean data created in controls folder
+# files created by a_convert_dicom_ssfp.sh within the original data folder are removed again
+
 
 # %%
