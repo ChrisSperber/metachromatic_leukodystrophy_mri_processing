@@ -208,6 +208,10 @@ data_df.to_csv(output_name, index=False, sep=";")
 # %%
 # clean data created in controls folder
 # files created by a_convert_dicom_ssfp.sh within the original data folder are removed again
-
+for path in image_paths_list_ssfp_controls:
+    nifti = ORIGINAL_DATA_ROOT_DIR / path
+    json = ORIGINAL_DATA_ROOT_DIR / path.replace(".nii.gz", ".json")
+    nifti.unlink()
+    json.unlink()
 
 # %%
