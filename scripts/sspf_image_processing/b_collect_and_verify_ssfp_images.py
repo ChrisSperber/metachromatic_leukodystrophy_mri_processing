@@ -141,6 +141,7 @@ date_tags_list_controls = []
 for path in image_paths_list_ssfp_controls:
     # get ID from initials
     id = path.split("/")[2]
+    id = id.replace("_", "")  # remove underscore from special case
     id_list_controls.append(id)
     # date tag is set to Unknown for consistency
     date_tag = UNKNOWN
