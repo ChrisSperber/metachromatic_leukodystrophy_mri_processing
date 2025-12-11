@@ -177,6 +177,8 @@ controls_data_df = pd.DataFrame(
 controls_data_df = controls_data_df[
     controls_data_df[Cols.SUBJECT_ID] != "MLD119_prisma71"
 ]
+# remove case with severe imaging artefacts
+controls_data_df = controls_data_df[controls_data_df[Cols.SUBJECT_ID] != "MLD111"]
 
 # drop unique ID/SSFP_time combinations that do not have the maximum running number
 controls_data_df = (
