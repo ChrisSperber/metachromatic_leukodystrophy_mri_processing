@@ -203,7 +203,7 @@ controls_data_df = pd.DataFrame(
 )
 # remove erroneous/duplciated data
 controls_data_df = controls_data_df[
-    controls_data_df[Cols.SUBJECT_ID] != "MLD119_prisma71"
+    controls_data_df[Cols.SUBJECT_ID] != "MLD119prisma71"
 ]
 # remove case with severe imaging artefacts
 controls_data_df = controls_data_df[controls_data_df[Cols.SUBJECT_ID] != "MLD111"]
