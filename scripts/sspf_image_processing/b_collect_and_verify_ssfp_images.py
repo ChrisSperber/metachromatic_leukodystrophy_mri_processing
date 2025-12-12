@@ -41,6 +41,12 @@ CONTROLS_PATH_TAG = "controls"
 
 SSFP_TIME = "SSFP_time"
 
+# patients without T1 cannot be included in the main pipeline and are removed
+SFFP_WITH_MISSING_T1 = [8005, 8113, 8185, 8189, 8090, 8136, 8155]
+# Note: IDs 8161 and 8190 are handled separately session-wise
+ID_8161_SESSIONS_MISSING_T1 = ["20140627", "20151124"]
+ID_8190_SESSIONS_MISSING_T1 = ["20131115", "20140930", "20150429"]
+
 # %%
 sample_df = pd.read_csv(SAMPLE_DATA_CSV, sep=";")
 # for simplicity, only keep T1 images as reference for included cases
@@ -95,6 +101,27 @@ for path in image_paths_list_ssfp_patients:
     id = patient_id_lookup_table.loc[
         patient_id_lookup_table["Initials"] == initials, "ID"
     ].iloc[0]
+
+    # skip if patient with missing T1
+    if id in SFFP_WITH_MISSING_T1:
+        continue
+    if id == 8161:  # noqa: PLR2004
+        date_tag = re.search(
+            r"/ssfp/[a-zA-Z]{2,3}(\d+)", path
+        ).group(  # pyright: ignore[reportOptionalMemberAccess]
+            1
+        )
+        if date_tag in ID_8161_SESSIONS_MISSING_T1:
+            continue
+    if id == 8190:  # noqa: PLR2004
+        date_tag = re.search(
+            r"/ssfp/[a-zA-Z]{2,3}(\d+)", path
+        ).group(  # pyright: ignore[reportOptionalMemberAccess]
+            1
+        )
+        if date_tag in ID_8190_SESSIONS_MISSING_T1:
+            continue
+
     id_list_patients.append(int(id))
 
     # get SSFP time
