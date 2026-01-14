@@ -16,6 +16,7 @@ Outputs:
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from mld_tbss.config import (
@@ -48,11 +49,31 @@ patient_id_df = patient_id_df[~patient_id_df["Initials"].isin(WRONG_INITIALS)]
 dwi_path_list = []
 bval_path_list = []
 bvec_path_list = []
+bvals_list = []
 
 # list all potential dwi files
 bval_filepaths_list = list(ORIGINAL_DIFFUSION_DATA_DIR.rglob(BVAL_FILENAME))
 bvec_filepaths_list = list(ORIGINAL_DIFFUSION_DATA_DIR.rglob(BVEC_FILENAME))
 dwi_filepaths_list = list(ORIGINAL_DIFFUSION_DATA_DIR.rglob(DWI_FILENAME))
+
+
+# %%
+# helper to extract bvals
+def get_shells_from_bval(bval_path: Path, round_to: int = 100) -> list[int]:
+    """Extract existing dwi b shell values from a bval file.
+
+    Args:
+        bval_path (Path): Path to a bval file.
+        round_to (int, optional): Rounding resolution. Defaults to 100.
+
+    Returns:
+        list[int]: List of rounded bval values in bval file.
+
+    """
+    bvals = np.loadtxt(str(bval_path))
+    shells = np.unique(np.round(bvals / round_to) * round_to)
+    return shells.astype(int).tolist()
+
 
 # %%
 
@@ -92,12 +113,14 @@ for _, row in sample_data_df.iterrows():
     bval_path_list.append(bval_path.relative_to(ORIGINAL_DATA_ROOT_DIR))
     bvec_path_list.append(bvec_path.relative_to(ORIGINAL_DATA_ROOT_DIR))
     dwi_path_list.append(dwi_path.relative_to(ORIGINAL_DATA_ROOT_DIR))
+    bvals_list.append(get_shells_from_bval(bval_path))
 
 # %%
 # assign to df and prepare output
 sample_data_df[DWIPathCols.DWI_PATH] = dwi_path_list
 sample_data_df[DWIPathCols.BVAL_PATH] = bval_path_list
 sample_data_df[DWIPathCols.BVEC_PATH] = bvec_path_list
+sample_data_df[DWIPathCols.BVALS] = bvals_list
 
 relevent_cols = [
     Cols.SUBJECT_ID,
@@ -106,6 +129,7 @@ relevent_cols = [
     DWIPathCols.DWI_PATH,
     DWIPathCols.BVAL_PATH,
     DWIPathCols.BVEC_PATH,
+    DWIPathCols.BVALS,
 ]
 
 output_df = sample_data_df[relevent_cols].copy()
