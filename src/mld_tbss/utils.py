@@ -1,6 +1,7 @@
 """Utility functions and constants for MLD MRI processing."""
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,15 @@ class Cols:
     IMAGE_MODALITY: str = "Image_Modality"
     DTI_METHOD: str = "DTI_Method"
     SUBJECT_TYPE: str = "Subject_Type"  # Column name for patient/control tag
+
+
+@dataclass(frozen=True)
+class DWIPathCols:
+    """Data column names for DWI Paths."""
+
+    DWI_PATH: str = "dwiPath"
+    BVAL_PATH: str = "bvalPath"
+    BVEC_PATH: str = "bvecPath"
 
 
 def get_unique_row(df: pd.DataFrame, column: str, substring: str) -> pd.Series:
@@ -144,3 +154,41 @@ def combine_hemispheres(
 
     combined = np.where(lmask, left, right)
     return combined
+
+
+def find_unique_path(
+    paths: list[Path], substring1: str, substring2: str | None = None
+) -> Path:
+    """Find a unique filepath in a list containing unique strings.
+
+    Args:
+        paths: List of path objects.
+        substring1: Substring to match
+        substring2: Second substring to match (optional)
+
+    Raises:
+        ValueError: More than 1 matching file exists.
+
+    Returns:
+        Unique file path.
+
+    """
+    if substring2:
+        matches = [p for p in paths if substring1 in str(p) and substring2 in str(p)]
+    else:
+        matches = [p for p in paths if substring1 in str(p)]
+
+    if len(matches) == 1:
+        return matches[0]
+    elif len(matches) > 1:
+        if substring2:
+            raise ValueError(
+                f"Multiple matches found for {substring1} and {substring2}"
+            )
+        else:
+            raise ValueError(f"Multiple matches found for {substring1}")
+    else:  # noqa: PLR5501
+        if substring2:
+            raise ValueError(f"No matches found for {substring1} and {substring2}")
+        else:
+            raise ValueError(f"No matches found for {substring1}")

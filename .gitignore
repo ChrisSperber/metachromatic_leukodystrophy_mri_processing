@@ -3,6 +3,9 @@
 *.png
 *_image_qc.pdf
 
+# remove dwi paths containing initials
+*collect_dwi_files.tsv
+
 # FSL/TBSS outputs (heavy/regenerable)
 # Ignore everything in outputs/ by default…
 src/tbss_pipeline/outputs/**
