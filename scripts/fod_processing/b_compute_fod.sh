@@ -26,11 +26,6 @@ DATA_DIR="$PROJECT_DIR/mld_data"
 SRC_DIR="$PROJECT_DIR/temp_images"
 OUT_DIR="$SRC_DIR/FOD_images"
 
-FAIL_LOG="$OUT_DIR/fod_failures.tsv"
-if [[ ! -f "$FAIL_LOG" ]]; then
-    echo -e "Subject_ID\tDate_Tag\tDTI_Method\tDWI_Path\tReason" > "$FAIL_LOG"
-fi
-
 # Path to TSV
 TSV_PATH="$script_dir/a_collect_dwi_files.tsv"
 
@@ -40,6 +35,11 @@ if [[ ! -f "$TSV_PATH" ]]; then
 fi
 
 mkdir -p "$OUT_DIR"
+
+FAIL_LOG="$OUT_DIR/fod_failures.tsv"
+if [[ ! -f "$FAIL_LOG" ]]; then
+    echo -e "Subject_ID\tDate_Tag\tDTI_Method\tDWI_Path\tReason" > "$FAIL_LOG"
+fi
 
 echo "Project dir : $PROJECT_DIR"
 echo "TSV         : $TSV_PATH"
