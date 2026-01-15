@@ -26,6 +26,11 @@ DATA_DIR="$PROJECT_DIR/mld_data"
 SRC_DIR="$PROJECT_DIR/temp_images"
 OUT_DIR="$SRC_DIR/FOD_images"
 
+FAIL_LOG="$OUT_DIR/fod_failures.tsv"
+if [[ ! -f "$FAIL_LOG" ]]; then
+    echo -e "Subject_ID\tDate_Tag\tDTI_Method\tDWI_Path\tReason" > "$FAIL_LOG"
+fi
+
 # Path to TSV
 TSV_PATH="$script_dir/a_collect_dwi_files.tsv"
 
@@ -137,6 +142,15 @@ tail -n +2 "$TSV_PATH" | sed 's/\r$//' | while IFS=$'\t' read -r subject_id date
     if [[ ! -f "$bval_path" || ! -f "$bvec_path" ]]; then
         echo "  WARNING: missing bval/bvec -> skipping" >&2
         continue
+    fi
+
+    # integrity check for .nii.gz inputs
+    if [[ "$dwi_path" == *.nii.gz ]]; then
+        if ! gzip -t "$dwi_path" >/dev/null 2>&1; then
+            echo "  ERROR: corrupted gzip (CRC) -> skipping: $dwi_path" >&2
+            echo -e "${subject_id}\t${date_tag}\t${dti_method}\t${dwi_path}\tCORRUPT_GZIP" >> "$FAIL_LOG"
+            continue
+        fi
     fi
 
     # (1) Convert NIfTI + grads -> .mif (once)
