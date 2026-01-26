@@ -30,7 +30,7 @@ DELETE_RESPONSE_FILES="${DELETE_RESPONSE_FILES:-0}"
 # These should be tuned based on typical mask sizes.
 # The check is based on the SUM of mask voxels.
 MASK_MIN_VOXELS="${MASK_MIN_VOXELS:-15000}"
-MASK_MAX_VOXELS="${MASK_MAX_VOXELS:-1200000}"
+MASK_MAX_VOXELS="${MASK_MAX_VOXELS:-500000}"
 
 # If 1: fail the subject when mask is out of bounds.
 # If 0: only log QC warning but continue.
@@ -123,18 +123,28 @@ else
     need_cmd mrstats
 fi
 
-# helper: compute mask voxel sum (rounded to int)
-mask_voxel_sum() {
+# helper: compute number of non-zero voxels in mask (rounded to int)
+mask_voxel_count() {
     local mask_path="$1"
-    # mrstats returns float; round to nearest int for comparisons.
-    local sum
-    sum="$(mrtrix mrstats "$mask_path" -output sum -quiet 2>/dev/null || true)"
-    if [[ -z "${sum}" ]]; then
-        echo ""
-        return 1
-    fi
-    awk -v x="$sum" 'BEGIN { printf("%d\n", x+0.5) }'
+    local out
+
+    # Count voxels where mask is non-zero; capture both streams
+    out="$(mrtrix mrstats "$mask_path" -mask "$mask_path" -output count -quiet 2>&1)" || return 1
+
+    # Extract numeric value robustly and round
+    awk '
+      {
+        for (i = 1; i <= NF; i++)
+          if ($i ~ /^-?[0-9]+(\.[0-9]+)?$/)
+            x = $i
+      }
+      END {
+        if (x == "") exit 1
+        printf("%d\n", x + 0.5)
+      }
+    ' <<<"$out"
 }
+
 
 # -----------------------------
 # MAIN LOOP
@@ -267,7 +277,7 @@ tail -n +2 "$TSV_PATH" | sed 's/\r$//' | while IFS=$'\t' read -r subject_id date
     fi
 
     # (4b) Mask guard rail (log + optionally fail subject)
-    vox_sum="$(mask_voxel_sum "$mask_mif" || true)"
+    vox_sum="$(mask_voxel_count "$mask_mif" || true)"
     if [[ -z "${vox_sum}" ]]; then
         echo "  ERROR: could not compute mask voxel sum -> skipping" >&2
         echo -e "${subject_id}\t${date_tag}\t${dti_method}\t${dwi_path}\tMASK_QC_MRSTATS_FAILED" >> "$FAIL_LOG"
