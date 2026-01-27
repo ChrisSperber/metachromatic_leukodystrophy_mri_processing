@@ -29,8 +29,8 @@ DELETE_RESPONSE_FILES="${DELETE_RESPONSE_FILES:-0}"
 # Guard rail for dwi2mask sanity:
 # These should be tuned based on typical mask sizes.
 # The check is based on the SUM of mask voxels.
-MASK_MIN_VOXELS="${MASK_MIN_VOXELS:-15000}"
-MASK_MAX_VOXELS="${MASK_MAX_VOXELS:-500000}"
+MASK_MIN_VOXELS="${MASK_MIN_VOXELS:-50000}"
+MASK_MAX_VOXELS="${MASK_MAX_VOXELS:-300000}"
 
 # If 1: fail the subject when mask is out of bounds.
 # If 0: only log QC warning but continue.
