@@ -5,7 +5,7 @@ set -euo pipefail
 # Set to:
 #   "all"      → controls + patients
 #   "patients" → patients only (IDs without MLD prefix)
-SUBJECT_SET="patients"
+SUBJECT_SET="all"
 
 MRTRIX_CONDA_ENV="${MRTRIX_CONDA_ENV:-mrtrix3}"
 USE_CONDA_RUN="${USE_CONDA_RUN:-1}"
@@ -16,7 +16,8 @@ TEMPLATE_VOXEL_SIZE="${TEMPLATE_VOXEL_SIZE:-2.0}"
 # -----------------------------
 # MULTI-CONTRAST REGISTRATION SETTINGS
 # Order: WM, GM, CSF, e.g. "1,1,1" for equal weighting
-MC_WEIGHTS="1,1,1"
+# should add up to 3 for 3 contrasts
+MC_WEIGHTS="1.5,0.75,0.75"
 
 script_dir="$(dirname "$(realpath "$0")")"
 PROJECT_DIR="$(realpath "$script_dir/../../..")"
@@ -178,7 +179,7 @@ for subj_wm in "${inputs[@]}"; do
   "$subj_wm"  "$TEMPLATE_WM_FOD" \
   "$gm_reg"   "$TEMPLATE_GM" \
   "$csf_reg"  "$TEMPLATE_CSF" \
-  >"$log" 2>&1
+  >>"$log" 2>&1
 
   # 2) Apply warp to WM FOD (with reorientation) using the non-linear warp
   # NOTE: this time, the existing warp is a single warp, i.e. a 4D x,y,z,3 deformation field and NOT a x,y,z,3,4 5D warp
