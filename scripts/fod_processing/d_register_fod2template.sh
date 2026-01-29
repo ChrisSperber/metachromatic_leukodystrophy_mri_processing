@@ -180,7 +180,9 @@ for subj_wm in "${inputs[@]}"; do
   "$csf_reg"  "$TEMPLATE_CSF" \
   >"$log" 2>&1
 
-  # 2) Apply warp to WM FOD (with reorientation) using the 5D non-linear warp
+  # 2) Apply warp to WM FOD (with reorientation) using the non-linear warp
+  # NOTE: this time, the existing warp is a single warp, i.e. a 4D x,y,z,3 deformation field and NOT a x,y,z,3,4 5D warp
+  # (aka warp_full) as in the previous script.
   mrtrix mrtransform \
     "$subj_wm" \
     "$wm_in_tpl" \
