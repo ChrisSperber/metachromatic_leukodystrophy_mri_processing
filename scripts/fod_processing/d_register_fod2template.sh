@@ -16,7 +16,7 @@ TEMPLATE_VOXEL_SIZE="${TEMPLATE_VOXEL_SIZE:-2.0}"
 # -----------------------------
 # REGISTRATION QC (catastrophic failure filter)
 # -----------------------------
-REGISTRATION_QC_THRES="${REGISTRATION_QC_THRES:-0.70}"   # Dice on brain masks in template space
+REGISTRATION_QC_THRES="${REGISTRATION_QC_THRES:-0.80}"   # Dice on brain masks in template space
 
 # -----------------------------
 # MULTI-START / FALLBACK LADDER
@@ -27,8 +27,10 @@ REGISTRATION_QC_THRES="${REGISTRATION_QC_THRES:-0.70}"   # Dice on brain masks i
 #   mc  → multi-contrast (WM+GM+CSF) using -mc_weights
 #   wm  → WM-only registration (no -mc_weights, no GM/CSF inputs)
 ATTEMPTS=(
+  "mc|1.2,0.8,1.0"
   "mc|1.5,0.75,0.75"
   "mc|2.2,0.4,0.4"
+  "mc|2.6,0.4,0"
   "wm|"
 )
 
