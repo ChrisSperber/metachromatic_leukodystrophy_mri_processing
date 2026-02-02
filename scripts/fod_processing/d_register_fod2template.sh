@@ -167,21 +167,21 @@ compute_dice() {
     mrtrix mrcalc "$a_bin" "$b_bin" -mult -force "$inter"
   } >>"$log" 2>&1
 
-  # voxel counts (sum of binary mask)
-  local a_sum b_sum i_sum
-  a_sum="$(mrtrix mrstats "$a_bin" -sum 2>>"$log" | tr -d '[:space:]' || true)"
-  b_sum="$(mrtrix mrstats "$b_bin" -sum 2>>"$log" | tr -d '[:space:]' || true)"
-  i_sum="$(mrtrix mrstats "$inter" -sum 2>>"$log" | tr -d '[:space:]' || true)"
+  # Count NONZERO voxels by using the image itself as mask
+  local a_n b_n i_n
+  a_n="$(mrtrix mrstats "$a_bin"  -mask "$a_bin"  -output count 2>>"$log" | tr -d '[:space:]' || true)"
+  b_n="$(mrtrix mrstats "$b_bin"  -mask "$b_bin"  -output count 2>>"$log" | tr -d '[:space:]' || true)"
+  i_n="$(mrtrix mrstats "$inter"  -mask "$inter"  -output count 2>>"$log" | tr -d '[:space:]' || true)"
 
-  # guard against empty masks
-  if [[ -z "$a_sum" || -z "$b_sum" || "$a_sum" == "0" || "$b_sum" == "0" ]]; then
+  # If something went wrong, fail safe to 0
+  if [[ -z "$a_n" || -z "$b_n" || -z "$i_n" || "$a_n" == "0" || "$b_n" == "0" ]]; then
     echo "0"
     return 0
   fi
 
-  # Dice as float via awk (avoid bc dependency)
-  awk -v i="$i_sum" -v a="$a_sum" -v b="$b_sum" 'BEGIN{printf "%.6f", (2.0*i)/(a+b)}'
+  awk -v i="$i_n" -v a="$a_n" -v b="$b_n" 'BEGIN{printf "%.6f", (2.0*i)/(a+b)}'
 }
+
 
 # -----------------------------
 # One attempt runner
