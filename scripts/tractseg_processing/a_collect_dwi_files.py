@@ -79,8 +79,8 @@ bvec_filepaths_list = list(ORIGINAL_DIFFUSION_DATA_DIR.rglob(BVEC_FILENAME))
 dwi_filepaths_list = list(ORIGINAL_DIFFUSION_DATA_DIR.rglob(DWI_FILENAME))
 
 # list potential mif files, first check that they were processed
-wm_mif_filepaths_list = list(FOD_PROCESSING_DIR.rglob(f"*{WM_MIF_TAG}*"))
-dwi_mask_filepaths_list = list(FOD_PROCESSING_DIR.rglob(f"*{DWI_MASK_TAG}*"))
+wm_mif_filepaths_list = list(FOD_PROCESSING_DIR.rglob(f"*{WM_MIF_TAG}"))
+dwi_mask_filepaths_list = list(FOD_PROCESSING_DIR.rglob(f"*{DWI_MASK_TAG}"))
 
 
 # %%
@@ -158,7 +158,7 @@ sample_data_df[DWIPathCols.BVALS] = bvals_list
 sample_data_df[DWIPathCols.MIF_PATH] = wm_mif_path_list
 sample_data_df[DWIPathCols.DWI_MASK] = dwi_mask_path_list
 
-relevent_cols = [
+relevant_cols = [
     Cols.SUBJECT_ID,
     Cols.DATE_TAG,
     Cols.DTI_METHOD,
@@ -170,7 +170,7 @@ relevent_cols = [
     DWIPathCols.DWI_MASK,
 ]
 
-output_df = sample_data_df[relevent_cols].copy()
+output_df = sample_data_df[relevant_cols].copy()
 
 # %%
 # store output
