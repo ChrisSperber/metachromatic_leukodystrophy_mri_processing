@@ -34,6 +34,8 @@ class DWIPathCols:
     BVAL_PATH: str = "bvalPath"
     BVEC_PATH: str = "bvecPath"
     BVALS: str = "bvals"
+    MIF_PATH: str = "mifPath"
+    DWI_MASK: str = "dwiMaskPath"
 
 
 def get_unique_row(df: pd.DataFrame, column: str, substring: str) -> pd.Series:
