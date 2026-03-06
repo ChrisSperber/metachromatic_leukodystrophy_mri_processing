@@ -2,6 +2,7 @@
 .vscode/
 *.png
 *_image_qc.pdf
+*_tractseg_qc_pdfs/
 
 # remove dwi paths containing initials
 *collect_dwi_files.tsv
