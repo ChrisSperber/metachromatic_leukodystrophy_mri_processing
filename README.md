@@ -10,6 +10,11 @@ This repository contains the Python and Bash code for a research project analysi
 | Folder/File                           | Description                                                     |
 |---------------------------------------|-----------------------------------------------------------------|
 | `scripts/`                            | Main processing and analysis scripts (Python + Bash)            |
+| └──`fod_processing/`                  | Fiber orientation density creation and processing               |
+| └──`mri_scores_processing/`           | Collection of MRI score rating data                             |
+| └──`sspf_image_processing/`           | Process Steady-State Free Precession images and derive pseudo-  |
+|                                       |   magnetic transfer ratio images                                |
+| └──`tractseg_processing/`             | Segment white matter tracts via TractSeg Software               |
 | `src/`                                |                                                                 |
 | └──`mld_tbss/`                        | Installable Python toolbox (utilities, config paths)            |
 | └──`tbss_pipeline/`                   | Legacy TBSS-related configuration (retained for reference)      |
@@ -25,7 +30,7 @@ This repository contains the Python and Bash code for a research project analysi
 
 This project was developed and run using Python 3.12.12 in a local `venv` environment in Ubuntu 22.04.5
 All dependency versions outside of Python (Freesurfer, ANTs, FSL) are tracked in ./reports
-> ⚠️ **Note**: Freesurfer 8.1.0 does **not** run in an Ubuntu OS version >22.x
+> ⚠️ **Note**: Freesurfer 8.1.0 does **not** run on Ubuntu OS versions >22.x
 
 ### 1. Clone the repository
 ```bash
@@ -62,8 +67,8 @@ The repository is intended to reside in the same parent directory as the data fo
 ## Outputs
 ### Intermediate Outputs
 The code collects relevant imaging data - either by copying existing NIFTIs or by creating them from DICOMs - and demographic/clinical data. Imaging data are stored in a "temp_images" folder. All segmentations and processed/registered images are created in subfolders in "temp_images".
-### Final outputs
-The final outputs are volumetric segmentation data and connected local FA/MD values stored in long CSVs in an "mld_MRI_output_metrics" folder.
+### Outputs
+Outputs include volumetric segmentation data and connected local FA/MD/MTR values stored in long CSVs in an "mld_MRI_output_metrics" folder.
 
 ---
 ### References
