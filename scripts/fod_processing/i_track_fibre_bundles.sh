@@ -47,7 +47,7 @@ KEEP_INTERMEDIATES="${KEEP_INTERMEDIATES:-0}"
 # Density threshold for binary mask creation:
 #   0 -> mask voxels with density > 0
 #   N>0 -> mask voxels with density >= N
-BINARY_MIN_DENSITY="${BINARY_MIN_DENSITY:-0}"
+BINARY_MIN_DENSITY="${BINARY_MIN_DENSITY:-20}"
 
 # -----------------------------
 # PATHS
@@ -68,6 +68,7 @@ PLIC_LEFT_NII="$ROI_DIR/manual_PLIC_L_roi_template.nii.gz"
 PLIC_RIGHT_NII="$ROI_DIR/manual_PLIC_R_roi_template.nii.gz"
 PEDUNCLE_LEFT_NII="$ROI_DIR/manual_peduncle_L_roi_template.nii.gz"
 PEDUNCLE_RIGHT_NII="$ROI_DIR/manual_peduncle_R_roi_template.nii.gz"
+POSTERIOR_BRAINSTEM_NII="$ROI_DIR/manual_postbrainstem_roi_template.nii.gz"
 
 mkdir -p "$OUT_ROOT"
 
@@ -159,6 +160,7 @@ need_file "$PLIC_LEFT_NII"
 need_file "$PLIC_RIGHT_NII"
 need_file "$PEDUNCLE_LEFT_NII"
 need_file "$PEDUNCLE_RIGHT_NII"
+need_file "$POSTERIOR_BRAINSTEM_NII"
 
 # -----------------------------
 # HELPERS
@@ -320,18 +322,20 @@ extract_tract() {
 # -----------------------------
 # RUN CURRENT TRACTS
 # -----------------------------
+# CST - Defined by Precentral gyrus in LPBA, PLIC, CEREBRAL PEDUNCLE
+# exclude medial CC, contrallateral peduncle, posterior brainstem (towards Cerebellum)
 extract_tract \
     "cst_left" \
     "27" \
     "" \
     "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
-    "$CC_MEDIAL_NII"
+    "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII"
 
 extract_tract \
     "cst_right" \
     "28" \
     "" \
     "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
-    "$CC_MEDIAL_NII"
+    "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII"
 
 echo "Done."
