@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # Track selected fibre bundles in template space from a whole-brain template tractogram.
 #
-# Current tracts:
-#   - cst_left
-#   - cst_right
-#
 # For each tract, the script:
 #   1) extracts atlas-based include/exclude ROIs
 #   2) converts manual include/exclude ROIs to MRtrix format
@@ -16,15 +12,19 @@
 #        - text summary
 #
 # Main function:
-#   extract_tract <tract_name> <atlas_label> <manual_include_roi> <manual_exclude_roi>
+#   extract_tract "<tract_name>" "<include_atlas_labels>" "<exclude_atlas_labels>" \
+#                 "<include_manual_rois>" "<exclude_manual_rois>"
 #
 # Arguments:
-#   tract_name           Output name, e.g. "cst_left"
-#   atlas_label          Integer label in LPBA atlas for cortical include ROI
-#   manual_include_roi   Path to unilateral manual include ROI (e.g. PLIC)
-#   manual_exclude_roi   Path to shared/manual exclusion ROI (e.g. medial CC)
+#   tract_name             Output name, e.g. "cst_left"
+#   include_atlas_labels   Quoted, space-separated atlas labels used as include ROIs
+#   exclude_atlas_labels   Quoted, space-separated atlas labels used as exclude ROIs
+#   include_manual_rois    Quoted, space-separated paths to manual include ROIs
+#   exclude_manual_rois    Quoted, space-separated paths to manual exclude ROIs
 #
 # Notes:
+#   - Each atlas label is converted into its own binary ROI and passed separately to tckedit.
+#     Therefore, multiple include atlas labels mean a streamline must pass through all of them.
 #   - Binary mask threshold is applied to the density map:
 #       * default: > 0
 #       * can be changed via BINARY_MIN_DENSITY
@@ -63,9 +63,11 @@ TEMPLATE_IMAGE="$TEMP_DIR/FA_template/template_FA_2.0mm.nii.gz"
 ATLAS_NII="$TEMP_DIR/sri_atlas_template/lpba40_in_template.nii.gz"
 
 ROI_DIR="$(realpath "$script_dir/../../src/manual_rois")"
-CC_EXCLUDE_NII="$ROI_DIR/manual_medialCC_roi_template.nii.gz"
+CC_MEDIAL_NII="$ROI_DIR/manual_medialCC_roi_template.nii.gz"
 PLIC_LEFT_NII="$ROI_DIR/manual_PLIC_L_roi_template.nii.gz"
 PLIC_RIGHT_NII="$ROI_DIR/manual_PLIC_R_roi_template.nii.gz"
+PEDUNCLE_LEFT_NII="$ROI_DIR/manual_peduncle_L_roi_template.nii.gz"
+PEDUNCLE_RIGHT_NII="$ROI_DIR/manual_peduncle_R_roi_template.nii.gz"
 
 mkdir -p "$OUT_ROOT"
 
@@ -108,14 +110,13 @@ if [[ -n "$MRTRIX_CONDA_ENV" ]]; then
     need_cmd conda
 fi
 
+need_cmd awk
 need_cmd basename
-need_cmd dirname
 need_cmd date
+need_cmd dirname
 need_cmd mkdir
 need_cmd rm
-need_cmd wc
-need_cmd awk
-need_cmd grep
+need_cmd sed
 
 if [[ -n "$MRTRIX_CONDA_ENV" && "$USE_CONDA_RUN" != "1" ]]; then
     eval "$(conda shell.bash hook)"
@@ -153,18 +154,25 @@ need_file() {
 need_file "$TRACTOGRAM"
 need_file "$TEMPLATE_IMAGE"
 need_file "$ATLAS_NII"
-need_file "$CC_EXCLUDE_NII"
+need_file "$CC_MEDIAL_NII"
 need_file "$PLIC_LEFT_NII"
 need_file "$PLIC_RIGHT_NII"
+need_file "$PEDUNCLE_LEFT_NII"
+need_file "$PEDUNCLE_RIGHT_NII"
 
 # -----------------------------
 # HELPERS
 # -----------------------------
+sanitize_token() {
+    printf '%s' "$1" | sed 's/[^A-Za-z0-9._-]/_/g'
+}
+
 extract_tract() {
     local tract_name="$1"
-    local atlas_label="$2"
-    local manual_include_nii="$3"
-    local manual_exclude_nii="$4"
+    local include_atlas_labels="$2"
+    local exclude_atlas_labels="$3"
+    local include_manual_rois="$4"
+    local exclude_manual_rois="$5"
 
     local tract_dir
     local roi_dir
@@ -175,6 +183,7 @@ extract_tract() {
     local density_nii
     local mask_mif
     local mask_nii
+    local atlas_mif
 
     tract_dir="$OUT_ROOT/$tract_name"
     roi_dir="$tract_dir/rois"
@@ -186,34 +195,65 @@ extract_tract() {
     density_nii="$tract_dir/${tract_name}_density.nii.gz"
     mask_mif="$tract_dir/${tract_name}_mask.mif"
     mask_nii="$tract_dir/${tract_name}_mask.nii.gz"
+    atlas_mif="$tmp_dir/atlas.mif"
 
     mkdir -p "$tract_dir" "$roi_dir" "$tmp_dir"
 
-    local atlas_mif
-    local cortex_roi_mif
-    local include_roi_mif
-    local exclude_roi_mif
+    local include_flags=()
+    local exclude_flags=()
 
-    atlas_mif="$tmp_dir/atlas.mif"
-    cortex_roi_mif="$roi_dir/${tract_name}_precentral.mif"
-    include_roi_mif="$roi_dir/${tract_name}_manual_include.mif"
-    exclude_roi_mif="$roi_dir/${tract_name}_manual_exclude.mif"
+    local label
+    local roi
+    local roi_mif
+    local token
 
     echo "=== ${tract_name} ==="
 
-    # Convert atlas / manual ROIs to MRtrix format on template grid
     mrtrix mrconvert "$ATLAS_NII" "$atlas_mif" -force
-    mrtrix mrconvert "$manual_include_nii" "$include_roi_mif" -force
-    mrtrix mrconvert "$manual_exclude_nii" "$exclude_roi_mif" -force
 
-    # Extract cortical ROI from integer atlas label
-    mrtrix mrcalc "$atlas_mif" "$atlas_label" -eq "$cortex_roi_mif" -force
+    # Include atlas ROIs
+    for label in $include_atlas_labels; do
+        token="$(sanitize_token "$label")"
+        roi_mif="$roi_dir/${tract_name}_atlas_include_label_${token}.mif"
+        mrtrix mrcalc "$atlas_mif" "$label" -eq "$roi_mif" -force
+        include_flags+=("-include" "$roi_mif")
+    done
+
+    # Exclude atlas ROIs
+    for label in $exclude_atlas_labels; do
+        token="$(sanitize_token "$label")"
+        roi_mif="$roi_dir/${tract_name}_atlas_exclude_label_${token}.mif"
+        mrtrix mrcalc "$atlas_mif" "$label" -eq "$roi_mif" -force
+        exclude_flags+=("-exclude" "$roi_mif")
+    done
+
+    # Include manual ROIs
+    for roi in $include_manual_rois; do
+        need_file "$roi"
+        token="$(sanitize_token "$(basename "${roi%.*}")")"
+        roi_mif="$roi_dir/${tract_name}_manual_include_${token}.mif"
+        mrtrix mrconvert "$roi" "$roi_mif" -force
+        include_flags+=("-include" "$roi_mif")
+    done
+
+    # Exclude manual ROIs
+    for roi in $exclude_manual_rois; do
+        need_file "$roi"
+        token="$(sanitize_token "$(basename "${roi%.*}")")"
+        roi_mif="$roi_dir/${tract_name}_manual_exclude_${token}.mif"
+        mrtrix mrconvert "$roi" "$roi_mif" -force
+        exclude_flags+=("-exclude" "$roi_mif")
+    done
+
+    if [[ "${#include_flags[@]}" -eq 0 && "${#exclude_flags[@]}" -eq 0 ]]; then
+        echo "ERROR: tract '${tract_name}' has no include or exclude ROIs." >&2
+        exit 1
+    fi
 
     # Select streamlines
     mrtrix tckedit "$TRACTOGRAM" "$tract_tck" \
-        -include "$cortex_roi_mif" \
-        -include "$include_roi_mif" \
-        -exclude "$exclude_roi_mif" \
+        "${include_flags[@]}" \
+        "${exclude_flags[@]}" \
         -force
 
     # Density map on template grid
@@ -252,9 +292,10 @@ extract_tract() {
         echo "tractogram: ${TRACTOGRAM}"
         echo "template_image: ${TEMPLATE_IMAGE}"
         echo "atlas: ${ATLAS_NII}"
-        echo "atlas_label_precentral: ${atlas_label}"
-        echo "manual_include_roi: ${manual_include_nii}"
-        echo "manual_exclude_roi: ${manual_exclude_nii}"
+        echo "include_atlas_labels: ${include_atlas_labels}"
+        echo "exclude_atlas_labels: ${exclude_atlas_labels}"
+        echo "include_manual_rois: ${include_manual_rois}"
+        echo "exclude_manual_rois: ${exclude_manual_rois}"
         echo "binary_min_density: ${BINARY_MIN_DENSITY}"
         echo "n_streamlines: ${n_streamlines:-NA}"
         echo "n_mask_voxels: ${n_mask_voxels:-NA}"
@@ -279,7 +320,18 @@ extract_tract() {
 # -----------------------------
 # RUN CURRENT TRACTS
 # -----------------------------
-extract_tract "cst_left"  "27" "$PLIC_LEFT_NII"  "$CC_EXCLUDE_NII"
-extract_tract "cst_right" "28" "$PLIC_RIGHT_NII" "$CC_EXCLUDE_NII"
+extract_tract \
+    "cst_left" \
+    "27" \
+    "" \
+    "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
+    "$CC_MEDIAL_NII"
+
+extract_tract \
+    "cst_right" \
+    "28" \
+    "" \
+    "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
+    "$CC_MEDIAL_NII"
 
 echo "Done."
