@@ -12,19 +12,31 @@
 #        - text summary
 #
 # Main function:
-#   extract_tract "<tract_name>" "<include_atlas_labels>" "<exclude_atlas_labels>" \
+#   extract_tract "<tract_name>" "<include_atlas_groups>" "<exclude_atlas_groups>" \
 #                 "<include_manual_rois>" "<exclude_manual_rois>"
 #
 # Arguments:
-#   tract_name             Output name, e.g. "cst_left"
-#   include_atlas_labels   Quoted, space-separated atlas labels used as include ROIs
-#   exclude_atlas_labels   Quoted, space-separated atlas labels used as exclude ROIs
-#   include_manual_rois    Quoted, space-separated paths to manual include ROIs
-#   exclude_manual_rois    Quoted, space-separated paths to manual exclude ROIs
+#   tract_name            Output name, e.g. "cst_left"
+#   include_atlas_groups  Quoted string describing include atlas ROI groups
+#   exclude_atlas_groups  Quoted string describing exclude atlas ROI groups
+#   include_manual_rois   Quoted, space-separated paths to manual include ROIs
+#   exclude_manual_rois   Quoted, space-separated paths to manual exclude ROIs
+#
+# Atlas group syntax:
+#   - ';' separates groups
+#   - ',' separates labels within one group
+#   - labels within a group are merged by OR into one ROI
+#   - different include groups are passed separately to tckedit, i.e. AND logic across groups
+#
+# Example:
+#   "1,2,3;10;15,16"
+#   -> include/exclude three atlas ROI groups:
+#        group1 = label 1 OR 2 OR 3
+#        group2 = label 10
+#        group3 = label 15 OR 16
 #
 # Notes:
-#   - Each atlas label is converted into its own binary ROI and passed separately to tckedit.
-#     Therefore, multiple include atlas labels mean a streamline must pass through all of them.
+#   - the tzo116plus.nii labels in the SRI24 atlas are used
 #   - Binary mask threshold is applied to the density map:
 #       * default: > 0
 #       * can be changed via BINARY_MIN_DENSITY
@@ -60,7 +72,7 @@ OUT_ROOT="$TEMP_DIR/fibres_tracked_in_template"
 
 TRACTOGRAM="$TEMP_DIR/fod_template/tractography/template_tracks_2000000.tck"
 TEMPLATE_IMAGE="$TEMP_DIR/FA_template/template_FA_2.0mm.nii.gz"
-ATLAS_NII="$TEMP_DIR/sri_atlas_template/lpba40_in_template.nii.gz"
+ATLAS_NII="$TEMP_DIR/sri_atlas_template/tzo116plus_in_template.nii.gz"
 
 ROI_DIR="$(realpath "$script_dir/../../src/manual_rois")"
 CC_MEDIAL_NII="$ROI_DIR/manual_medialCC_roi_template.nii.gz"
@@ -118,6 +130,7 @@ need_cmd dirname
 need_cmd mkdir
 need_cmd rm
 need_cmd sed
+need_cmd tr
 
 if [[ -n "$MRTRIX_CONDA_ENV" && "$USE_CONDA_RUN" != "1" ]]; then
     eval "$(conda shell.bash hook)"
@@ -169,10 +182,61 @@ sanitize_token() {
     printf '%s' "$1" | sed 's/[^A-Za-z0-9._-]/_/g'
 }
 
+strip_nii_ext() {
+    local name="$1"
+    name="${name%.nii.gz}"
+    name="${name%.nii}"
+    printf '%s\n' "$name"
+}
+
+make_atlas_group_roi() {
+    local atlas_mif="$1"
+    local label_group_csv="$2"
+    local out_roi="$3"
+
+    local group_clean
+    local first_label
+    local label
+    local tmp_roi
+    local tmp_combined
+    local idx=0
+
+    group_clean="$(printf '%s' "$label_group_csv" | tr -d '[:space:]')"
+
+    if [[ -z "$group_clean" ]]; then
+        echo "ERROR: empty atlas group encountered." >&2
+        exit 1
+    fi
+
+    IFS=',' read -r -a labels <<< "$group_clean"
+
+    if [[ "${#labels[@]}" -eq 0 ]]; then
+        echo "ERROR: failed to parse atlas group '$label_group_csv'." >&2
+        exit 1
+    fi
+
+    first_label="${labels[0]}"
+    mrtrix mrcalc "$atlas_mif" "$first_label" -eq "$out_roi" -force
+
+    for label in "${labels[@]:1}"; do
+        idx=$((idx + 1))
+        tmp_roi="${out_roi%.mif}_label_${idx}.mif"
+        tmp_combined="${out_roi%.mif}_combined_${idx}.mif"
+
+        mrtrix mrcalc "$atlas_mif" "$label" -eq "$tmp_roi" -force
+        mrtrix mrcalc "$out_roi" "$tmp_roi" -add 0 -gt "$tmp_combined" -force
+        mv -f "$tmp_combined" "$out_roi"
+
+        if [[ "$KEEP_INTERMEDIATES" != "1" ]]; then
+            rm -f "$tmp_roi"
+        fi
+    done
+}
+
 extract_tract() {
     local tract_name="$1"
-    local include_atlas_labels="$2"
-    local exclude_atlas_labels="$3"
+    local include_atlas_groups="$2"
+    local exclude_atlas_groups="$3"
     local include_manual_rois="$4"
     local exclude_manual_rois="$5"
 
@@ -204,35 +268,45 @@ extract_tract() {
     local include_flags=()
     local exclude_flags=()
 
-    local label
+    local group
     local roi
     local roi_mif
     local token
+    local base_name
 
     echo "=== ${tract_name} ==="
 
     mrtrix mrconvert "$ATLAS_NII" "$atlas_mif" -force
 
-    # Include atlas ROIs
-    for label in $include_atlas_labels; do
-        token="$(sanitize_token "$label")"
-        roi_mif="$roi_dir/${tract_name}_atlas_include_label_${token}.mif"
-        mrtrix mrcalc "$atlas_mif" "$label" -eq "$roi_mif" -force
+    # Include atlas ROI groups
+    IFS=';' read -r -a include_groups <<< "$include_atlas_groups"
+    for group in "${include_groups[@]}"; do
+        group="$(printf '%s' "$group" | tr -d '[:space:]')"
+        [[ -z "$group" ]] && continue
+
+        token="$(sanitize_token "$group")"
+        roi_mif="$roi_dir/${tract_name}_atlas_include_group_${token}.mif"
+        make_atlas_group_roi "$atlas_mif" "$group" "$roi_mif"
         include_flags+=("-include" "$roi_mif")
     done
 
-    # Exclude atlas ROIs
-    for label in $exclude_atlas_labels; do
-        token="$(sanitize_token "$label")"
-        roi_mif="$roi_dir/${tract_name}_atlas_exclude_label_${token}.mif"
-        mrtrix mrcalc "$atlas_mif" "$label" -eq "$roi_mif" -force
+    # Exclude atlas ROI groups
+    IFS=';' read -r -a exclude_groups <<< "$exclude_atlas_groups"
+    for group in "${exclude_groups[@]}"; do
+        group="$(printf '%s' "$group" | tr -d '[:space:]')"
+        [[ -z "$group" ]] && continue
+
+        token="$(sanitize_token "$group")"
+        roi_mif="$roi_dir/${tract_name}_atlas_exclude_group_${token}.mif"
+        make_atlas_group_roi "$atlas_mif" "$group" "$roi_mif"
         exclude_flags+=("-exclude" "$roi_mif")
     done
 
     # Include manual ROIs
     for roi in $include_manual_rois; do
         need_file "$roi"
-        token="$(sanitize_token "$(basename "${roi%.*}")")"
+        base_name="$(strip_nii_ext "$(basename "$roi")")"
+        token="$(sanitize_token "$base_name")"
         roi_mif="$roi_dir/${tract_name}_manual_include_${token}.mif"
         mrtrix mrconvert "$roi" "$roi_mif" -force
         include_flags+=("-include" "$roi_mif")
@@ -241,7 +315,8 @@ extract_tract() {
     # Exclude manual ROIs
     for roi in $exclude_manual_rois; do
         need_file "$roi"
-        token="$(sanitize_token "$(basename "${roi%.*}")")"
+        base_name="$(strip_nii_ext "$(basename "$roi")")"
+        token="$(sanitize_token "$base_name")"
         roi_mif="$roi_dir/${tract_name}_manual_exclude_${token}.mif"
         mrtrix mrconvert "$roi" "$roi_mif" -force
         exclude_flags+=("-exclude" "$roi_mif")
@@ -285,7 +360,7 @@ extract_tract() {
     )"
 
     n_mask_voxels="$(
-        mrtrix mrstats "$mask_mif" -output count 2>/dev/null | awk 'NR==1 {print $1}'
+        mrtrix mrstats "$mask_mif" -output sum 2>/dev/null | awk 'NR==1 {print $1}'
     )"
 
     {
@@ -294,8 +369,8 @@ extract_tract() {
         echo "tractogram: ${TRACTOGRAM}"
         echo "template_image: ${TEMPLATE_IMAGE}"
         echo "atlas: ${ATLAS_NII}"
-        echo "include_atlas_labels: ${include_atlas_labels}"
-        echo "exclude_atlas_labels: ${exclude_atlas_labels}"
+        echo "include_atlas_groups: ${include_atlas_groups}"
+        echo "exclude_atlas_groups: ${exclude_atlas_groups}"
         echo "include_manual_rois: ${include_manual_rois}"
         echo "exclude_manual_rois: ${exclude_manual_rois}"
         echo "binary_min_density: ${BINARY_MIN_DENSITY}"
@@ -322,18 +397,18 @@ extract_tract() {
 # -----------------------------
 # RUN CURRENT TRACTS
 # -----------------------------
-# CST - Defined by Precentral gyrus in LPBA, PLIC, CEREBRAL PEDUNCLE
-# exclude medial CC, contrallateral peduncle, posterior brainstem (towards Cerebellum)
+# CST - Defined by precentral gyrus in atlas, PLIC, cerebral peduncle
+# exclude medial CC, contralateral peduncle, posterior brainstem
 extract_tract \
     "cst_left" \
-    "27" \
+    "1" \
     "" \
     "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
     "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII"
 
 extract_tract \
     "cst_right" \
-    "28" \
+    "2" \
     "" \
     "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
     "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII"
