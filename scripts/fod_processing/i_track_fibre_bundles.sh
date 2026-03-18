@@ -59,7 +59,7 @@ KEEP_INTERMEDIATES="${KEEP_INTERMEDIATES:-0}"
 # Density threshold for binary mask creation:
 #   0 -> mask voxels with density > 0
 #   N>0 -> mask voxels with density >= N
-BINARY_MIN_DENSITY="${BINARY_MIN_DENSITY:-20}"
+BINARY_MIN_DENSITY="${BINARY_MIN_DENSITY:-25}"
 
 # -----------------------------
 # PATHS
@@ -355,12 +355,13 @@ extract_tract() {
     local n_mask_voxels
 
     n_streamlines="$(
-        mrtrix tckinfo "$tract_tck" 2>/dev/null \
-        | awk -F: '/count/ {gsub(/^[ \t]+/, "", $2); print $2; exit}'
+        { mrtrix tckinfo "$tract_tck" 2>/dev/null || true; } \
+        | awk -F: '/count/ {gsub(/^[ \t]+/, "", $2); value=$2} END {print (value==""?"NA":value)}'
     )"
 
     n_mask_voxels="$(
-        mrtrix mrstats "$mask_mif" -output sum 2>/dev/null | awk 'NR==1 {print $1}'
+        { mrtrix mrstats "$mask_mif" -output sum 2>/dev/null || true; } \
+        | awk 'NR==1 {print $1}'
     )"
 
     {
@@ -412,5 +413,20 @@ extract_tract \
     "" \
     "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
     "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII"
+
+# SLFI, see supplementary Pretzel et al.
+extract_tract \
+    "SLFI_left" \
+    "59,67;1,3,7,11,13,19,23" \
+    "" \
+    "" \
+    "$CC_MEDIAL_NII"
+
+extract_tract \
+    "SLFI_right" \
+    "60,68;2,4,8,12,14,20,24" \
+    "" \
+    "" \
+    "$CC_MEDIAL_NII"
 
 echo "Done."
