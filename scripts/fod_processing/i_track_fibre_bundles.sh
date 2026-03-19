@@ -13,7 +13,7 @@
 #
 # Main function:
 #   extract_tract "<tract_name>" "<include_atlas_groups>" "<exclude_atlas_groups>" \
-#                 "<include_manual_rois>" "<exclude_manual_rois>"
+#                 "<include_manual_rois>" "<exclude_manual_rois>" "<binary_min_density>"
 #
 # Arguments:
 #   tract_name            Output name, e.g. "cst_left"
@@ -21,6 +21,9 @@
 #   exclude_atlas_groups  Quoted string describing exclude atlas ROI groups
 #   include_manual_rois   Quoted, space-separated paths to manual include ROIs
 #   exclude_manual_rois   Quoted, space-separated paths to manual exclude ROIs
+#   binary_min_density    Density threshold for binary mask creation:
+#                         0 -> mask voxels with density > 0
+#                         N>0 -> mask voxels with density >= N
 #
 # Atlas group syntax:
 #   - ';' separates groups
@@ -37,9 +40,6 @@
 #
 # Notes:
 #   - the tzo116plus.nii labels in the SRI24 atlas are used
-#   - Binary mask threshold is applied to the density map:
-#       * default: > 0
-#       * can be changed via BINARY_MIN_DENSITY
 #   - Intermediates are deleted by default (KEEP_INTERMEDIATES=0)
 #   - ROIs and tractogram must already be in the same template space
 
@@ -55,11 +55,6 @@ MRTRIX_NTHREADS="${MRTRIX_NTHREADS:-6}"
 
 # Keep temporary/intermediate files inside each tract folder?
 KEEP_INTERMEDIATES="${KEEP_INTERMEDIATES:-0}"
-
-# Density threshold for binary mask creation:
-#   0 -> mask voxels with density > 0
-#   N>0 -> mask voxels with density >= N
-BINARY_MIN_DENSITY="${BINARY_MIN_DENSITY:-25}"
 
 # -----------------------------
 # PATHS
@@ -81,6 +76,7 @@ PLIC_RIGHT_NII="$ROI_DIR/manual_PLIC_R_roi_template.nii.gz"
 PEDUNCLE_LEFT_NII="$ROI_DIR/manual_peduncle_L_roi_template.nii.gz"
 PEDUNCLE_RIGHT_NII="$ROI_DIR/manual_peduncle_R_roi_template.nii.gz"
 POSTERIOR_BRAINSTEM_NII="$ROI_DIR/manual_postbrainstem_roi_template.nii.gz"
+DORSAL_WM_SLFI_NII="$ROI_DIR/manual_dorsal_wm_SLFI_roi_template.nii.gz"
 
 mkdir -p "$OUT_ROOT"
 
@@ -94,7 +90,6 @@ echo "Manual ROI dir     : $ROI_DIR"
 echo "Conda env          : ${MRTRIX_CONDA_ENV} (USE_CONDA_RUN=${USE_CONDA_RUN})"
 echo "Threads            : ${MRTRIX_NTHREADS}"
 echo "Keep intermediates : ${KEEP_INTERMEDIATES}"
-echo "Binary min density : ${BINARY_MIN_DENSITY}"
 echo
 
 # -----------------------------
@@ -174,6 +169,7 @@ need_file "$PLIC_RIGHT_NII"
 need_file "$PEDUNCLE_LEFT_NII"
 need_file "$PEDUNCLE_RIGHT_NII"
 need_file "$POSTERIOR_BRAINSTEM_NII"
+need_file "$DORSAL_WM_SLFI_NII"
 
 # -----------------------------
 # HELPERS
@@ -234,11 +230,55 @@ make_atlas_group_roi() {
 }
 
 extract_tract() {
-    local tract_name="$1"
-    local include_atlas_groups="$2"
-    local exclude_atlas_groups="$3"
-    local include_manual_rois="$4"
-    local exclude_manual_rois="$5"
+    local tract_name=""
+    local include_atlas_groups=""
+    local exclude_atlas_groups=""
+    local include_manual_rois=""
+    local exclude_manual_rois=""
+    local binary_min_density="0"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --tract_name)
+                tract_name="$2"
+                shift 2
+                ;;
+            --include_atlas_groups)
+                include_atlas_groups="$2"
+                shift 2
+                ;;
+            --exclude_atlas_groups)
+                exclude_atlas_groups="$2"
+                shift 2
+                ;;
+            --include_manual_rois)
+                include_manual_rois="$2"
+                shift 2
+                ;;
+            --exclude_manual_rois)
+                exclude_manual_rois="$2"
+                shift 2
+                ;;
+            --binary_min_density)
+                binary_min_density="$2"
+                shift 2
+                ;;
+            *)
+                echo "ERROR: unknown argument to extract_tract: $1" >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [[ -z "$tract_name" ]]; then
+        echo "ERROR: --tract_name is required" >&2
+        return 1
+    fi
+
+    if ! [[ "$binary_min_density" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: --binary_min_density must be a non-negative integer, got: '$binary_min_density'" >&2
+        return 1
+    fi
 
     local tract_dir
     local roi_dir
@@ -267,6 +307,8 @@ extract_tract() {
 
     local include_flags=()
     local exclude_flags=()
+    local include_groups=()
+    local exclude_groups=()
 
     local group
     local roi
@@ -275,10 +317,10 @@ extract_tract() {
     local base_name
 
     echo "=== ${tract_name} ==="
+    echo "  binary min density: ${binary_min_density}"
 
     mrtrix mrconvert "$ATLAS_NII" "$atlas_mif" -force
 
-    # Include atlas ROI groups
     IFS=';' read -r -a include_groups <<< "$include_atlas_groups"
     for group in "${include_groups[@]}"; do
         group="$(printf '%s' "$group" | tr -d '[:space:]')"
@@ -290,7 +332,6 @@ extract_tract() {
         include_flags+=("-include" "$roi_mif")
     done
 
-    # Exclude atlas ROI groups
     IFS=';' read -r -a exclude_groups <<< "$exclude_atlas_groups"
     for group in "${exclude_groups[@]}"; do
         group="$(printf '%s' "$group" | tr -d '[:space:]')"
@@ -302,7 +343,6 @@ extract_tract() {
         exclude_flags+=("-exclude" "$roi_mif")
     done
 
-    # Include manual ROIs
     for roi in $include_manual_rois; do
         need_file "$roi"
         base_name="$(strip_nii_ext "$(basename "$roi")")"
@@ -312,7 +352,6 @@ extract_tract() {
         include_flags+=("-include" "$roi_mif")
     done
 
-    # Exclude manual ROIs
     for roi in $exclude_manual_rois; do
         need_file "$roi"
         base_name="$(strip_nii_ext "$(basename "$roi")")"
@@ -324,16 +363,14 @@ extract_tract() {
 
     if [[ "${#include_flags[@]}" -eq 0 && "${#exclude_flags[@]}" -eq 0 ]]; then
         echo "ERROR: tract '${tract_name}' has no include or exclude ROIs." >&2
-        exit 1
+        return 1
     fi
 
-    # Select streamlines
     mrtrix tckedit "$TRACTOGRAM" "$tract_tck" \
         "${include_flags[@]}" \
         "${exclude_flags[@]}" \
         -force
 
-    # Density map on template grid
     mrtrix tckmap "$tract_tck" "$density_mif" \
         -template "$TEMPLATE_IMAGE" \
         -datatype uint32 \
@@ -341,16 +378,14 @@ extract_tract() {
 
     mrtrix mrconvert "$density_mif" "$density_nii" -force
 
-    # Binary mask from density map
-    if [[ "$BINARY_MIN_DENSITY" == "0" ]]; then
+    if [[ "$binary_min_density" == "0" ]]; then
         mrtrix mrcalc "$density_mif" 0 -gt "$mask_mif" -force
     else
-        mrtrix mrcalc "$density_mif" "$BINARY_MIN_DENSITY" -ge "$mask_mif" -force
+        mrtrix mrcalc "$density_mif" "$binary_min_density" -ge "$mask_mif" -force
     fi
 
     mrtrix mrconvert "$mask_mif" "$mask_nii" -datatype uint8 -force
 
-    # Summary
     local n_streamlines
     local n_mask_voxels
 
@@ -374,7 +409,7 @@ extract_tract() {
         echo "exclude_atlas_groups: ${exclude_atlas_groups}"
         echo "include_manual_rois: ${include_manual_rois}"
         echo "exclude_manual_rois: ${exclude_manual_rois}"
-        echo "binary_min_density: ${BINARY_MIN_DENSITY}"
+        echo "binary_min_density: ${binary_min_density}"
         echo "n_streamlines: ${n_streamlines:-NA}"
         echo "n_mask_voxels: ${n_mask_voxels:-NA}"
         echo "outputs:"
@@ -398,35 +433,40 @@ extract_tract() {
 # -----------------------------
 # RUN CURRENT TRACTS
 # -----------------------------
+
 # CST - Defined by precentral gyrus in atlas, PLIC, cerebral peduncle
 # exclude medial CC, contralateral peduncle, posterior brainstem
 extract_tract \
-    "cst_left" \
-    "1" \
-    "" \
-    "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
-    "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII"
+    --tract_name "cst_left" \
+    --include_atlas_groups "1" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII" \
+    --binary_min_density "20"
 
 extract_tract \
-    "cst_right" \
-    "2" \
-    "" \
-    "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
-    "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII"
+    --tract_name "cst_right" \
+    --include_atlas_groups "2" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII" \
+    --binary_min_density "20"
 
 # SLFI, see supplementary Pretzel et al.
 extract_tract \
-    "SLFI_left" \
-    "59,67;1,3,7,11,13,19,23" \
-    "" \
-    "" \
-    "$CC_MEDIAL_NII"
+    --tract_name "SLFI_left" \
+    --include_atlas_groups "59,67;1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
 extract_tract \
-    "SLFI_right" \
-    "60,68;2,4,8,12,14,20,24" \
-    "" \
-    "" \
-    "$CC_MEDIAL_NII"
+    --tract_name "SLFI_right" \
+    --include_atlas_groups "60,68;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
 echo "Done."
