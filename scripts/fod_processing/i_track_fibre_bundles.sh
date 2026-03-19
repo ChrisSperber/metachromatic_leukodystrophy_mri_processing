@@ -30,6 +30,7 @@
 #   - ',' separates labels within one group
 #   - labels within a group are merged by OR into one ROI
 #   - different include groups are passed separately to tckedit, i.e. AND logic across groups
+#   - for label assignment see the SRI24-tzo116plus.txt file downloaded with the atlas
 #
 # Example:
 #   "1,2,3;10;15,16"
@@ -77,6 +78,8 @@ PEDUNCLE_LEFT_NII="$ROI_DIR/manual_peduncle_L_roi_template.nii.gz"
 PEDUNCLE_RIGHT_NII="$ROI_DIR/manual_peduncle_R_roi_template.nii.gz"
 POSTERIOR_BRAINSTEM_NII="$ROI_DIR/manual_postbrainstem_roi_template.nii.gz"
 DORSAL_WM_SLFI_NII="$ROI_DIR/manual_dorsal_wm_SLFI_roi_template.nii.gz"
+CAPSULA_INT_EXT_NII="$ROI_DIR/manual_capsula_int_ext_roi_template.nii.gz"
+INFERIOR_Z40_NII="$ROI_DIR/manual_inferior_z40_roi_template.nii.gz"
 
 mkdir -p "$OUT_ROOT"
 
@@ -170,6 +173,8 @@ need_file "$PEDUNCLE_LEFT_NII"
 need_file "$PEDUNCLE_RIGHT_NII"
 need_file "$POSTERIOR_BRAINSTEM_NII"
 need_file "$DORSAL_WM_SLFI_NII"
+need_file "$CAPSULA_INT_EXT_NII"
+need_file "$INFERIOR_Z40_NII"
 
 # -----------------------------
 # HELPERS
@@ -452,18 +457,52 @@ extract_tract \
     --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII" \
     --binary_min_density "20"
 
-# SLFI, see supplementary Pretzel et al.
+# SLFI, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
 extract_tract \
     --tract_name "SLFI_left" \
     --include_atlas_groups "59,67;1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$DORSAL_WM_SLFI_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
+    --binary_min_density "35"
+
+extract_tract \
+    --tract_name "SLFI_right" \
+    --include_atlas_groups "60,68;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$DORSAL_WM_SLFI_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
+    --binary_min_density "35"
+
+# SLFII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
+extract_tract \
+    --tract_name "SLFII_left" \
+    --include_atlas_groups "65; 1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
+    --binary_min_density "20"
+
+extract_tract \
+    --tract_name "SLFII_right" \
+    --include_atlas_groups "66;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
+    --binary_min_density "20"
+
+# SLFIII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
+extract_tract \
+    --tract_name "SLFIII_left" \
+    --include_atlas_groups "63; 1,3,7,11,13,19,23" \
     --exclude_atlas_groups "" \
     --include_manual_rois "" \
     --exclude_manual_rois "$CC_MEDIAL_NII" \
     --binary_min_density "20"
 
 extract_tract \
-    --tract_name "SLFI_right" \
-    --include_atlas_groups "60,68;2,4,8,12,14,20,24" \
+    --tract_name "SLFIII_right" \
+    --include_atlas_groups "64;2,4,8,12,14,20,24" \
     --exclude_atlas_groups "" \
     --include_manual_rois "" \
     --exclude_manual_rois "$CC_MEDIAL_NII" \
