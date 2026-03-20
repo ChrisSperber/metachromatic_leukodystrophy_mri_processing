@@ -80,6 +80,8 @@ POSTERIOR_BRAINSTEM_NII="$ROI_DIR/manual_postbrainstem_roi_template.nii.gz"
 DORSAL_WM_SLFI_NII="$ROI_DIR/manual_dorsal_wm_SLFI_roi_template.nii.gz"
 CAPSULA_INT_EXT_NII="$ROI_DIR/manual_capsula_int_ext_roi_template.nii.gz"
 INFERIOR_Z40_NII="$ROI_DIR/manual_inferior_z40_roi_template.nii.gz"
+CAPSULA_EXTERNA_NII="$ROI_DIR/manual_capsula_ext_roi_template.nii.gz"
+SAGITTAL_MIDLINE_NII="$ROI_DIR/manual_sagittal_midline_roi_template.nii.gz"
 
 mkdir -p "$OUT_ROOT"
 
@@ -175,6 +177,8 @@ need_file "$POSTERIOR_BRAINSTEM_NII"
 need_file "$DORSAL_WM_SLFI_NII"
 need_file "$CAPSULA_INT_EXT_NII"
 need_file "$INFERIOR_Z40_NII"
+need_file "$CAPSULA_EXTERNA_NII"
+need_file "$SAGITTAL_MIDLINE_NII"
 
 # -----------------------------
 # HELPERS
@@ -442,7 +446,7 @@ extract_tract() {
 # CST - Defined by precentral gyrus in atlas, PLIC, cerebral peduncle
 # exclude medial CC, contralateral peduncle, posterior brainstem
 extract_tract \
-    --tract_name "cst_left" \
+    --tract_name "CST_left" \
     --include_atlas_groups "1" \
     --exclude_atlas_groups "" \
     --include_manual_rois "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
@@ -450,7 +454,7 @@ extract_tract \
     --binary_min_density "20"
 
 extract_tract \
-    --tract_name "cst_right" \
+    --tract_name "CST_right" \
     --include_atlas_groups "2" \
     --exclude_atlas_groups "" \
     --include_manual_rois "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
@@ -505,6 +509,43 @@ extract_tract \
     --include_atlas_groups "64;2,4,8,12,14,20,24" \
     --exclude_atlas_groups "" \
     --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
+
+# ILF, see Catani etl al. 2002., Neuroimage
+# Temporal lobe (Temp Inf/Mid/Sup + Pole, Fusiform) to lateral Occipital lobe
+# exclude frontal areas to exclude IFOF contamination
+extract_tract \
+    --tract_name "ILF_left" \
+    --include_atlas_groups "55,81,83,85,87,89;45,47,49,51,53" \
+    --exclude_atlas_groups "1,3,7,11,13,19,23" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
+    --binary_min_density "35"
+
+extract_tract \
+    --tract_name "ILF_right" \
+    --include_atlas_groups "56,82,84,86,88,90;46,48,50,52,54" \
+    --exclude_atlas_groups "2,4,8,12,14,20,24" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
+    --binary_min_density "35"
+
+# IFOF, see Catani etl al. 2002., Neuroimage
+# Lateral Frontal to posterior mid/inf temporal / lingula & fusiform occipital lobe
+extract_tract \
+    --tract_name "IFOF_left" \
+    --include_atlas_groups "3,7,11,13,15; 47,55,85,89" \
+    --exclude_atlas_groups "1,3,5,7,9,11,13,19,23" \
+    --include_manual_rois "$CAPSULA_EXTERNA_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
+
+extract_tract \
+    --tract_name "IFOF_right" \
+    --include_atlas_groups "4,8,12,14,16;48,56,86,90" \
+    --exclude_atlas_groups "2,4,6,8,10,12,14,20,24" \
+    --include_manual_rois "$CAPSULA_EXTERNA_NII" \
     --exclude_manual_rois "$CC_MEDIAL_NII" \
     --binary_min_density "20"
 
