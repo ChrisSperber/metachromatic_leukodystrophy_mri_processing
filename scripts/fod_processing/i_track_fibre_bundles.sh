@@ -443,111 +443,111 @@ extract_tract() {
 # RUN CURRENT TRACTS
 # -----------------------------
 
-# # CST - Defined by precentral gyrus in atlas, PLIC, cerebral peduncle
-# # exclude medial CC, contralateral peduncle, posterior brainstem
-# extract_tract \
-#     --tract_name "CST_left" \
-#     --include_atlas_groups "1" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII" \
-#     --binary_min_density "20"
+# CST - Defined by precentral gyrus in atlas, PLIC, cerebral peduncle
+# exclude medial CC, contralateral peduncle, posterior brainstem
+extract_tract \
+    --tract_name "CST_left" \
+    --include_atlas_groups "1" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$PLIC_LEFT_NII $PEDUNCLE_LEFT_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_RIGHT_NII $POSTERIOR_BRAINSTEM_NII" \
+    --binary_min_density "20"
 
-# extract_tract \
-#     --tract_name "CST_right" \
-#     --include_atlas_groups "2" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII" \
-#     --binary_min_density "20"
+extract_tract \
+    --tract_name "CST_right" \
+    --include_atlas_groups "2" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$PLIC_RIGHT_NII $PEDUNCLE_RIGHT_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $PEDUNCLE_LEFT_NII $POSTERIOR_BRAINSTEM_NII" \
+    --binary_min_density "20"
 
-# # SLFI, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
-# extract_tract \
-#     --tract_name "SLFI_left" \
-#     --include_atlas_groups "59,67;1,3,7,11,13,19,23" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "$DORSAL_WM_SLFI_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
-#     --binary_min_density "35"
+# SLFI, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
+extract_tract \
+    --tract_name "SLFI_left" \
+    --include_atlas_groups "59,67;1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$DORSAL_WM_SLFI_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
+    --binary_min_density "35"
 
-# extract_tract \
-#     --tract_name "SLFI_right" \
-#     --include_atlas_groups "60,68;2,4,8,12,14,20,24" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "$DORSAL_WM_SLFI_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
-#     --binary_min_density "35"
+extract_tract \
+    --tract_name "SLFI_right" \
+    --include_atlas_groups "60,68;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "$DORSAL_WM_SLFI_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII $INFERIOR_Z40_NII" \
+    --binary_min_density "35"
 
-# # SLFII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
-# extract_tract \
-#     --tract_name "SLFII_left" \
-#     --include_atlas_groups "65; 1,3,7,11,13,19,23" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
-#     --binary_min_density "20"
+# SLFII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
+extract_tract \
+    --tract_name "SLFII_left" \
+    --include_atlas_groups "65; 1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
+    --binary_min_density "20"
 
-# extract_tract \
-#     --tract_name "SLFII_right" \
-#     --include_atlas_groups "66;2,4,8,12,14,20,24" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
-#     --binary_min_density "20"
+extract_tract \
+    --tract_name "SLFII_right" \
+    --include_atlas_groups "66;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII $CAPSULA_INT_EXT_NII" \
+    --binary_min_density "20"
 
-# # SLFIII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
-# extract_tract \
-#     --tract_name "SLFIII_left" \
-#     --include_atlas_groups "63; 1,3,7,11,13,19,23" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII" \
-#     --binary_min_density "20"
+# SLFIII, see supplementary Pretzel et al. 2023 (10.3389/fneur.2023.1241387)
+extract_tract \
+    --tract_name "SLFIII_left" \
+    --include_atlas_groups "63; 1,3,7,11,13,19,23" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
-# extract_tract \
-#     --tract_name "SLFIII_right" \
-#     --include_atlas_groups "64;2,4,8,12,14,20,24" \
-#     --exclude_atlas_groups "" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII" \
-#     --binary_min_density "20"
+extract_tract \
+    --tract_name "SLFIII_right" \
+    --include_atlas_groups "64;2,4,8,12,14,20,24" \
+    --exclude_atlas_groups "" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
-# # ILF, see Catani etl al. 2002., Neuroimage
-# # Temporal lobe (Temp Inf/Mid/Sup + Pole, Fusiform) to lateral Occipital lobe
-# # exclude frontal areas to exclude IFOF contamination
-# extract_tract \
-#     --tract_name "ILF_left" \
-#     --include_atlas_groups "55,81,83,85,87,89;45,47,49,51,53" \
-#     --exclude_atlas_groups "1,3,7,11,13,19,23" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
-#     --binary_min_density "35"
+# ILF, see Catani etl al. 2002., Neuroimage
+# Temporal lobe (Temp Inf/Mid/Sup + Pole, Fusiform) to lateral Occipital lobe
+# exclude frontal areas to exclude IFOF contamination
+extract_tract \
+    --tract_name "ILF_left" \
+    --include_atlas_groups "55,81,83,85,87,89;45,47,49,51,53" \
+    --exclude_atlas_groups "1,3,7,11,13,19,23" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
+    --binary_min_density "35"
 
-# extract_tract \
-#     --tract_name "ILF_right" \
-#     --include_atlas_groups "56,82,84,86,88,90;46,48,50,52,54" \
-#     --exclude_atlas_groups "2,4,8,12,14,20,24" \
-#     --include_manual_rois "" \
-#     --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
-#     --binary_min_density "35"
+extract_tract \
+    --tract_name "ILF_right" \
+    --include_atlas_groups "56,82,84,86,88,90;46,48,50,52,54" \
+    --exclude_atlas_groups "2,4,8,12,14,20,24" \
+    --include_manual_rois "" \
+    --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
+    --binary_min_density "35"
 
-# # IFOF, see Catani etl al. 2002., Neuroimage
-# # Lateral Frontal to posterior mid/inf temporal / lingula & fusiform occipital lobe
-# extract_tract \
-#     --tract_name "IFOF_left" \
-#     --include_atlas_groups "3,7,11,13,15; 47,55,85,89" \
-#     --exclude_atlas_groups "1,3,5,7,9,11,13,19,23" \
-#     --include_manual_rois "$CAPSULA_EXTERNA_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII" \
-#     --binary_min_density "20"
+# IFOF, see Catani etl al. 2002., Neuroimage
+# Lateral Frontal to posterior mid/inf temporal / lingula & fusiform occipital lobe
+extract_tract \
+    --tract_name "IFOF_left" \
+    --include_atlas_groups "3,7,11,13,15; 47,55,85,89" \
+    --exclude_atlas_groups "1,3,5,7,9,11,13,19,23" \
+    --include_manual_rois "$CAPSULA_EXTERNA_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
-# extract_tract \
-#     --tract_name "IFOF_right" \
-#     --include_atlas_groups "4,8,12,14,16;48,56,86,90" \
-#     --exclude_atlas_groups "2,4,6,8,10,12,14,20,24" \
-#     --include_manual_rois "$CAPSULA_EXTERNA_NII" \
-#     --exclude_manual_rois "$CC_MEDIAL_NII" \
-#     --binary_min_density "20"
+extract_tract \
+    --tract_name "IFOF_right" \
+    --include_atlas_groups "4,8,12,14,16;48,56,86,90" \
+    --exclude_atlas_groups "2,4,6,8,10,12,14,20,24" \
+    --include_manual_rois "$CAPSULA_EXTERNA_NII" \
+    --exclude_manual_rois "$CC_MEDIAL_NII" \
+    --binary_min_density "20"
 
 #################
 # Corpus Callosum
@@ -592,6 +592,7 @@ extract_tract \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
     --binary_min_density "20"
+
 # V) parietal, temporal, and occipital
 # this is an extremely widely defined ROI. Regions were not indiscriminately included, but only the likely relevant ones
 # parietal: Sup, Inf, Cuneus, Supramarginal, Angular
@@ -603,7 +604,7 @@ extract_tract \
     --exclude_atlas_groups "57;58" \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
-    --binary_min_density "20"
+    --binary_min_density "100"
 
 
 echo "Done."

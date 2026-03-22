@@ -10,7 +10,8 @@ This repository contains the Python and Bash code for a research project analysi
 | Folder/File                           | Description                                                     |
 |---------------------------------------|-----------------------------------------------------------------|
 | `scripts/`                            | Main processing and analysis scripts (Python + Bash)            |
-| └──`fod_processing/`                  | Fiber orientation density creation and processing               |
+| └──`fod_processing/`                  | Fiber orientation density creation, processing, and fibre       |
+|                                       | tracking including generation of fibre ROIs                     |
 | └──`mri_scores_processing/`           | Collection of MRI score rating data                             |
 | └──`sspf_image_processing/`           | Process Steady-State Free Precession images and derive pseudo-  |
 |                                       |   magnetic transfer ratio images                                |
