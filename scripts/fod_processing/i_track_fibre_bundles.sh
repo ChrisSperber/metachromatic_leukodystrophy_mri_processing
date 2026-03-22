@@ -536,7 +536,7 @@ extract_tract \
 extract_tract \
     --tract_name "IFOF_left" \
     --include_atlas_groups "3,7,11,13,15; 47,55,85,89" \
-    --exclude_atlas_groups "1,3,5,7,9,11,13,19,23" \
+    --exclude_atlas_groups "1,19,23" \
     --include_manual_rois "$CAPSULA_EXTERNA_NII" \
     --exclude_manual_rois "$CC_MEDIAL_NII" \
     --binary_min_density "20"
@@ -544,7 +544,7 @@ extract_tract \
 extract_tract \
     --tract_name "IFOF_right" \
     --include_atlas_groups "4,8,12,14,16;48,56,86,90" \
-    --exclude_atlas_groups "2,4,6,8,10,12,14,20,24" \
+    --exclude_atlas_groups "2,20,24" \
     --include_manual_rois "$CAPSULA_EXTERNA_NII" \
     --exclude_manual_rois "$CC_MEDIAL_NII" \
     --binary_min_density "20"
@@ -559,7 +559,7 @@ extract_tract \
 # NOTE: Frontal mid and frontal sup were excluded here and used in CC II
 extract_tract \
     --tract_name "CCI" \
-    --include_atlas_groups "7,9,13,15;4,6,8,10,14,16" \
+    --include_atlas_groups "5,9,13,15;6,10,14,16" \
     --exclude_atlas_groups "" \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
@@ -570,32 +570,32 @@ extract_tract \
 extract_tract \
     --tract_name "CCII" \
     --include_atlas_groups "3,7,19;4,8,20" \
-    --exclude_atlas_groups "7,9,13,15;4,6,8,10,14,16;1;2" \
+    --exclude_atlas_groups "5,9,13,15;6,10,14,16;1;2" \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
-    --binary_min_density "15"
+    --binary_min_density "30"
 
-# III) motor
+# III) motor (=precentral gyrus)
 extract_tract \
     --tract_name "CCIII" \
     --include_atlas_groups "1;2" \
     --exclude_atlas_groups "3,7,19;4,8,20;57;58" \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
-    --binary_min_density "20"
+    --binary_min_density "30"
 
-# IV) sensory
+# IV) sensory (=postcentral gyrus)
 extract_tract \
     --tract_name "CCIV" \
     --include_atlas_groups "57;58" \
     --exclude_atlas_groups "1;2" \
     --include_manual_rois "$CC_MEDIAL_NII" \
     --exclude_manual_rois "" \
-    --binary_min_density "20"
+    --binary_min_density "15"
 
 # V) parietal, temporal, and occipital
 # this is an extremely widely defined ROI. Regions were not indiscriminately included, but only the likely relevant ones
-# parietal: Sup, Inf, Cuneus, Supramarginal, Angular
+# parietal: Sup, Inf, Precuneus, Supramarginal, Angular
 # temporal: Sup, Mid, Inf
 # occipital: Calcarine, Cuneus, Lingual, Sup, Mid, Inf
 extract_tract \
