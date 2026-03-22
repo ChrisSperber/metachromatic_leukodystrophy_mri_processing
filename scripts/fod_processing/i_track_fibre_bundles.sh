@@ -521,7 +521,7 @@ extract_tract \
     --exclude_atlas_groups "1,3,7,11,13,19,23" \
     --include_manual_rois "" \
     --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
-    --binary_min_density "35"
+    --binary_min_density "100"
 
 extract_tract \
     --tract_name "ILF_right" \
@@ -529,7 +529,7 @@ extract_tract \
     --exclude_atlas_groups "2,4,8,12,14,20,24" \
     --include_manual_rois "" \
     --exclude_manual_rois "$CAPSULA_EXTERNA_NII $SAGITTAL_MIDLINE_NII" \
-    --binary_min_density "35"
+    --binary_min_density "100"
 
 # IFOF, see Catani etl al. 2002., Neuroimage
 # Lateral Frontal to posterior mid/inf temporal / lingula & fusiform occipital lobe
