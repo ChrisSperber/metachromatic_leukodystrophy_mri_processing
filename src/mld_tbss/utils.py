@@ -38,6 +38,15 @@ class DWIPathCols:
     DWI_MASK: str = "dwiMaskPath"
 
 
+@dataclass(frozen=True)
+class NODDIPathCols:
+    """Data column names for DWI Paths."""
+
+    FICVF_PATH: str = "ficvfPath"
+    FISO_PATH: str = "fisoPath"
+    ODI_PATH: str = "odiPath"
+
+
 def get_unique_row(df: pd.DataFrame, column: str, substring: str) -> pd.Series:
     """Get values of a row identified by an uid.
 
