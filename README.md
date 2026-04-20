@@ -12,7 +12,10 @@ This repository contains the Python and Bash code for a research project analysi
 | `scripts/`                            | Main processing and analysis scripts (Python + Bash)            |
 | └──`fod_processing/`                  | Fiber orientation density creation, processing, and fibre       |
 |                                       | tracking including generation of fibre ROIs                     |
+| └──`manual_mask_processing/`          | Processing of manual CST/PLIC/frontal ROIs drawn in FA          |
+|                                       | template space                                                  |
 | └──`mri_scores_processing/`           | Collection of MRI score rating data                             |
+| └──`noddi_processing/`                | Processing of preprocessed NODDI data (FISO,ODI,FICVF)          |
 | └──`sspf_image_processing/`           | Process Steady-State Free Precession images and derive pseudo-  |
 |                                       |   magnetic transfer ratio images                                |
 | └──`tractseg_processing/`             | Segment white matter tracts via TractSeg Software               |
