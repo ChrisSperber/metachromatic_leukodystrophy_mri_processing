@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(dirname "$(realpath "$0")")"
 projects_path="$(realpath "$script_dir/../../..")"
 ROOT="$projects_path/temp2convert"
+LOGFILE="$ROOT/conversion_errors.log"
 
 for subject_dir in "$ROOT"/*; do
     [ -d "$subject_dir" ] || continue
@@ -24,12 +25,16 @@ for subject_dir in "$ROOT"/*; do
 
             echo "Converting $dicom_dir -> $expected_out"
 
-            dcm2niix \
+            if ! dcm2niix \
                 -z y \
                 -b y \
                 -f "$dicom_name" \
                 -o "$session_dir" \
-                "$dicom_dir"
+                "$dicom_dir"; then
+
+                echo "FAILED: $dicom_dir" | tee -a "$LOGFILE"
+                continue
+            fi
         done
     done
 done
