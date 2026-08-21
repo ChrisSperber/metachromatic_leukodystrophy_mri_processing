@@ -4,6 +4,7 @@ from pathlib import Path
 
 ORIGINAL_DATA_ROOT_DIR = Path(__file__).parents[3] / "mld_data"
 TEMPORARY_DATA_DIR = Path(__file__).parents[3] / "temp_images"
+ORIGINAL_PROJECT_ROOT_DIR = Path(__file__).parents[3]
 
 ORIGINAL_DIFFUSION_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "NODDI"
 ORIGINAL_MP2RAGE_PATIENTS_DATA_DIR = ORIGINAL_DATA_ROOT_DIR / "patients" / "MP2RAGE"
