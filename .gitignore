@@ -3,6 +3,7 @@
 *.png
 *_image_qc.pdf
 *_tractseg_qc_pdfs/
+scratch/
 
 # remove dwi paths containing initials
 *collect_dwi_files.tsv
