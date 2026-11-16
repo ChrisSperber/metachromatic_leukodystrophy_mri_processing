@@ -74,9 +74,5 @@ The code collects relevant imaging data - either by copying existing NIFTIs or b
 Outputs include volumetric segmentation data and connected local FA/MD/MTR values stored in long CSVs in an "mld_MRI_output_metrics" folder.
 
 ---
-### References
-TBA
-
----
 ### License
 This project is licensed under the MIT License — see [Project License](LICENSE) for details.
